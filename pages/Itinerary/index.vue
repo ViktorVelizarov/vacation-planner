@@ -37,9 +37,6 @@
             </ul>
           </li>
         </ul>
-        <button @click="showModal" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4 mb-10 ml-4">
-          Add destination
-        </button>
       </div>
     </div>
 
@@ -61,23 +58,11 @@
         />
       </div>
     </div>
-
-    <!-- Modal component for /searchLocations -->
-    <Modal :isVisible="isModalVisible" title="More activities" @close="isModalVisible = false">
-      <SearchLocations v-model:destination="destination" @add-location="addLocationToItinerary" />
-    </Modal>
   </div>
 </template>
 
 <script>
-import Modal from '@/components/Modal.vue';
-import SearchLocations from '@/components/SearchLocations.vue';
-
 export default {
-  components: {
-    Modal,
-    SearchLocations
-  },
   data() {
     return {
       itinerary: null,
@@ -90,9 +75,7 @@ export default {
       destinationData: null,
       startDate: null,
       endDate: null,
-      peopleNumber: null,
-      isModalVisible: false,
-      destination: ''
+      peopleNumber: null
     };
   },
   computed: {
@@ -176,9 +159,6 @@ export default {
       }
     },
 
-    showModal() {
-      this.isModalVisible = true;
-    },
     showMap(index) {
       if (this.selectedDayIndex === index) {
         this.showMapComponent = !this.showMapComponent;
@@ -194,34 +174,6 @@ export default {
     async fetchMapData() {
       await new Promise(resolve => setTimeout(resolve, 2000));
       this.loadingMap = false;
-    },
-    addLocationToItinerary(newLocation) {
-      this.isModalVisible = false;
-      const newIndex = "added";
-      const formattedLocation = `${newIndex}: ${newLocation.name}`;
-      const formattedDescription = newLocation.description;
-
-      this.itinerary[0].activities.push(formattedLocation);
-      this.itinerary[0].activities.push(formattedDescription);
-      this.itinerary[0].coordinates.push([newLocation.longitude, newLocation.latitude]);
-      this.itinerary[0].names.push(newLocation.name);
-
-      this.formattedItinerary = this.itinerary.map((day, index) => {
-        const dayTitle = `Day ${index + 1} - ${day.activities[0]}`;
-        const dayActivities = day.activities.slice(1);
-        return { title: dayTitle, activities: dayActivities };
-      });
-
-      console.log("this.formattedItinerary")
-        console.log(this.formattedItinerary)
-    },
-    logLocationDetails(location) {
-      console.log("Location Details:", {
-        name: location.name,
-        description: location.description,
-        coordinates: [location.latitude, location.longitude]
-      });
-      this.addLocationToItinerary(location);
     }
   },
   watch: {
