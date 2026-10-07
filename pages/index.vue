@@ -27,7 +27,7 @@ useHead({
 
 <template>
   <div>
-    <LandingHero :nav="content.nav" :cta="content.demo" v-bind="content.hero" />
+    <LandingHero :nav="content.nav" :account="content.account" :cta="content.demo" v-bind="content.hero" />
     <LandingFinder :cta="content.demo" v-bind="content.finder" />
 
     <main id="main">

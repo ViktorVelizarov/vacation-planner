@@ -1,8 +1,10 @@
 import OpenAI from "openai";
+import { requireUser } from "../auth/session.js";
 
 const openai = new OpenAI();
 
 export default defineEventHandler(async (event) => {
+  await requireUser(event); // spends OpenAI credits: signed-in users only (the check sits outside the try on purpose)
   try {
     const query = getQuery(event);
     console.log("days");

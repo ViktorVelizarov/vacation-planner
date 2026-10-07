@@ -1,4 +1,7 @@
+import { requireUser } from '../auth/session.js'
+
 export default defineEventHandler(async (event) => {
+    await requireUser(event) // spends OpenAI credits: signed-in users only (outside the try on purpose)
     try {
       const query = getQuery(event)
       let promptText = `Give me the coordinates(Longitude, Latitude) for all the destinations from this text in day number ${query.dayNum} seperated by a / .Here is the text:   `;

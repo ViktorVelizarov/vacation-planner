@@ -32,6 +32,13 @@ export const landingContent = {
     { label: 'Quotes', to: '#quotes' },
   ],
 
+  // The nav's account control: a "Sign in" button, or the visitor's name and "Sign out" once signed in.
+  // The demo itself needs an account: /vacationForm and the demo API send visitors here first.
+  account: {
+    signIn: { label: 'Sign in', to: '/sign-in' },
+    signOut: 'Sign out',
+  },
+
   // Hero photograph: 16:9, the lone figure right of centre (x ~65%, head ~58%) so the headline sits above it
   // and the search card covers wall, not subject. Source file is 1280x724; a 2400x1350 export is better.
   hero: {
@@ -180,7 +187,7 @@ export const landingContent = {
         initials: 'PN',
       },
       {
-        text: 'Nothing needed an account. I opened it, filled in the form, and had a trip.',
+        text: 'Signing up took a minute. Then I filled in the form and had a trip.',
         name: 'Tomás V.',
         meta: 'Porto · Sample',
         initials: 'TV',
@@ -190,7 +197,7 @@ export const landingContent = {
 
   closing: {
     title: 'Ready to plan yours?',
-    text: 'Four answers in, a whole trip out. The demo opens the live trip form: no account, no card.',
+    text: 'Four answers in, a whole trip out. A free account opens the live trip form: no card.',
   },
 
   footer: {

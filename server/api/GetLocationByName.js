@@ -1,6 +1,8 @@
 // Resolves a name to { name, description, imageUrl }.
 //   ?destination=Paris                    -> the destination itself (itinerary header)
 //   ?destination=Louvre Museum&lat=..&long=.. -> a place near that point (map popup)
+import { requireUser } from '../auth/session.js';
+
 const NO_DESCRIPTION = 'No description available';
 const NO_IMAGE = 'No image available';
 
@@ -74,6 +76,7 @@ async function findDestination(destination) {
 }
 
 export default defineEventHandler(async (event) => {
+  await requireUser(event); // spends TripAdvisor quota: signed-in users only
   const { destination, lat, long } = getQuery(event);
 
   if (!destination) {

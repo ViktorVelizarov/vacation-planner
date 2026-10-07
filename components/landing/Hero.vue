@@ -4,11 +4,13 @@
 // important lives there. Halftone, grain and the navy scrim for the white text come from this file's styles.
 //   image     { src, width, height, alt }
 //   headline  array of lines, rendered with a line break between them
+//   account   passed on to the nav's Sign in / Sign out control
 defineProps({
   image: { type: Object, required: true },
   headline: { type: Array, required: true },
   lead: { type: String, default: '' },
   nav: { type: Array, default: () => [] },
+  account: { type: Object, default: null },
   cta: { type: Object, required: true },
 })
 </script>
@@ -26,7 +28,7 @@ defineProps({
       >
     </figure>
 
-    <LandingNav :links="nav" :cta="cta" />
+    <LandingNav :links="nav" :account="account" :cta="cta" />
 
     <div class="hero__body">
       <h1><template v-for="(line, i) in headline" :key="i"><br v-if="i">{{ line }}</template></h1>
