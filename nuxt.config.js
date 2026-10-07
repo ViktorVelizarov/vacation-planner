@@ -21,7 +21,8 @@ shadcn: {
   
   devtools: { enabled: false },
   css: [
-    "~/assets/main.css"
+    "~/assets/main.css",
+    "~/assets/css/landing.css"
   ],
   postcss: {
     plugins: {

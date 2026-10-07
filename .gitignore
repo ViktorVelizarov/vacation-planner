@@ -22,3 +22,8 @@ logs
 .env
 .env.*
 !.env.example
+
+# AI tooling (Claude Code, the design skill, MCP config): stays on this machine, not part of the app
+.claude/
+.impeccable/
+.mcp.json
