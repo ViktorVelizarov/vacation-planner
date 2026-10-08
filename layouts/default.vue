@@ -1,42 +1,51 @@
 <script setup>
-// Signed-in visitors get their name and a Sign out button on the right of the bar.
-const { user, loggedIn, signOut } = useAuth()
+// The frame for the app's working pages (the trip form and the itinerary): the home page's header and footer language
+// on a white bar, with the visitor's name and Sign out on the right. The bar and the footer carry the `landing` class
+// so they get the landing fonts and tokens; the page in between brings its own ground.
+// The class on <html> switches on the themed scrollbar and smooth scrolling from assets/css/landing.css.
+useHead({
+  htmlAttrs: { lang: 'en', class: 'vp-landing' },
+})
 
-async function leave() {
-  await signOut()
-  await navigateTo('/')
-}
+const year = new Date().getFullYear() // read at render time so it never goes stale
 </script>
 
 <template>
-    <div class="flex flex-col min-h-screen">
-      <nav class='sticky h-14 inset-x-0 top-0 z-30 w-full border-b bg-white transition-all'>
-        <div class='flex h-14 items-center justify-between border-b relative'>
-          <div class='flex flex-row items-center ml-12'>
-            <img src="https://i.pinimg.com/736x/3d/22/91/3d229119d65e1929fc63d813da0660ee.jpg" alt="Logo" class="h-12 w-14">
-            <router-link to="/" class="text-3xl font-bold font-madimi relative">Vacation Planner</router-link>
-            <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-blue-100"></div>
-          </div>
-          <div v-if="loggedIn" class="flex items-center gap-3 mr-12 text-sm">
-            <span class="hidden sm:inline-block max-w-[16ch] truncate align-middle text-gray-600" :title="user.name">{{ user.name }}</span>
-            <button type="button" class="rounded border px-3 py-1 hover:bg-gray-100" @click="leave">Sign out</button>
-          </div>
-        </div>
-      </nav>
-  
-      
-        <slot />
+  <div class="app flex flex-col min-h-screen">
+    <LandingSkipLink />
 
-  
-      <footer class="w-full h-14 border-t backdrop-blur-lg transition-all">
-        <div class="flex h-14 items-center justify-center">
-          <p class="text-center">© 2024 Vacation Planner. All rights reserved.</p>
-        </div>
-      </footer>
-    </div>
-  </template>
-  
-  <style>
-  /* Add any custom styles here */
-  </style>
-  
+    <header class="landing bar">
+      <div class="bar__row">
+        <LandingBrand ink to="/" />
+        <LandingAccount ink :account="landingContent.account" />
+      </div>
+    </header>
+
+    <main id="main" class="flex flex-col flex-grow">
+      <slot />
+    </main>
+
+    <footer class="landing foot">
+      <div class="foot__row">
+        <p class="mono">© {{ year }} Vacation Planner. All rights reserved.</p>
+      </div>
+    </footer>
+  </div>
+</template>
+
+<style scoped>
+.app { --app-bar: 66px; } /* the bar's height with its edge, for pages that stick something just below it */
+.bar { position: sticky; top: 0; z-index: 30; box-sizing: border-box; height: var(--app-bar); border-bottom: 1px solid var(--vp-line); }
+.bar__row { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 100%; max-width: var(--vp-wrap); margin: 0 auto; padding: 0 var(--vp-pad); }
+.foot { border-top: 1px solid var(--vp-line); }
+.foot__row { max-width: var(--vp-wrap); margin: 0 auto; padding: 22px var(--vp-pad); }
+.foot p { color: var(--vp-ink-3); text-transform: none; letter-spacing: .04em; }
+
+/* phones: the same shrink as the landing nav, so the bar never wraps */
+@media (max-width: 560px) {
+  .bar .brand { font-size: 18px; gap: 8px; }
+}
+@media (max-width: 380px) {
+  .bar .brand { font-size: 16px; }
+}
+</style>

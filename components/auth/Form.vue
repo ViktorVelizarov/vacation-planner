@@ -67,7 +67,7 @@ async function submit() {
 
 <template>
   <form class="form" novalidate :aria-busy="busy" @submit.prevent="submit">
-    <AuthAlert v-if="failure" :id="`${mode}-failure`" :hint="hint">{{ failure }}</AuthAlert>
+    <LandingAlert v-if="failure" :id="`${mode}-failure`" :hint="hint">{{ failure }}</LandingAlert>
 
     <AuthField
       v-if="isSignUp"

@@ -45,7 +45,7 @@ async function press() {
 
 <template>
   <div class="confirm">
-    <AuthAlert v-if="failure" id="confirm-failure" :hint="hint">{{ failure }}</AuthAlert>
+    <LandingAlert v-if="failure" id="confirm-failure" :hint="hint">{{ failure }}</LandingAlert>
     <LandingButton size="lg" arrow block :disabled="busy" @click="press">{{ busy ? copy.busy : copy.submit }}</LandingButton>
     <p class="confirm__note">{{ copy.notYou }}</p>
   </div>

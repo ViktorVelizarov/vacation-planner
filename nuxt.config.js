@@ -19,6 +19,12 @@ shadcn: {
     }
   },
   
+  runtimeConfig: {
+    public: {
+      mapboxToken: '', // set NUXT_PUBLIC_MAPBOX_TOKEN (a public pk. token); see .env.example
+    },
+  },
+
   devtools: { enabled: false },
   css: [
     "~/assets/main.css",

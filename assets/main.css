@@ -76,17 +76,3 @@
     @apply bg-background text-foreground;
   }
 }
-
-.marker {
-  background-color: orange;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  font-size: 14px;
-  font-weight: bold;
-  text-align: center;
-}

@@ -44,6 +44,8 @@ An account only works once its email address is confirmed. Creating one emails a
 3. **`NUXT_SESSION_PASSWORD`:** any long random string.
 4. Redeploy on Vercel, or restart `npm run dev` after editing `.env`.
 
+**The map.** The itinerary map needs `NUXT_PUBLIC_MAPBOX_TOKEN` (a public `pk.` token from your Mapbox account), in `.env` and on Vercel. It is a browser token, so restrict it to your site's addresses in the Mapbox dashboard. Without it the map card says it could not load and the days still work.
+
 **Where the emailed link points.** It is never taken from the request's `Host` header, because anyone can post a sign-up with a made-up one. On Vercel it is the project's production domain (production) or the deployment's own address (previews), which needs Vercel's system environment variables to be exposed (the default). On your machine it is the address you opened the page on, and only `localhost` or `127.0.0.1` count. Anywhere else, or to force a custom domain, set `AUTH_BASE_URL`; without it the sign-up fails and the server log names the setting.
 
 Not included yet: password reset, and per-user usage limits (a signed-in user can still generate as many itineraries as they like).

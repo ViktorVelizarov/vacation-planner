@@ -1,337 +1,266 @@
-<template>
-  <div class="vacation-itinerary-container w-full" style="background-image: url('https://images.rawpixel.com/image_800/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvbHIvdjkwNC1udW5ueS0wMTdfNC5qcGc.jpg'); background-size: cover; background-position: center;">
+<script setup>
+import { ArrowLeft, Calendar, MapPin, Users } from 'lucide-vue-next'
 
-    
-    <div class="left-section">
-      <div v-if="loadingItinerary" class="loading-container">
-        <div class="spinner"></div>
-        <p>Loading itinerary...</p>
-      </div>
-      
-      <div v-if="destinationData" class="destination-data">
-        <div class="image-container">
-          <img :src="destinationData.imageUrl" alt="Destination Image" class="destination-image" />
-          <div class="info-container">
-            <h1 class="destination-name">{{ destinationData.name }}</h1>
-            <div class="bubbles-container">
-              <div class="bubble">{{ formattedStartDate }} - {{ formattedEndDate }}</div>
-              <div class="bubble">{{ peopleNumber }} People</div>
-              <div v-for="preference in selectedPreferences" :key="preference" class="bubble">{{ preference }}</div>
+// The itinerary: where the trip form leads. The header is the trip as it was asked for (it needs no waiting: it comes from
+// the address), then one card per day and a map. The plan is drafted by a language model and takes around 20 seconds, so the
+// page shows the days as labelled placeholders while it waits; the destination's photo and description come from a faster
+// lookup and fill in on their own. Pressing a day shows its stops on the map, pressing it again shows every day.
+// Reading the model's reply is in utils/itinerary.js, the words in utils/itinerary-content.js, the map in components/trip/Map.vue.
+const copy = itineraryContent
+const route = useRoute()
+
+const first = (value) => (Array.isArray(value) ? value[0] : value)
+
+// ── the trip, as the form asked for it ──
+const destination = computed(() => String(first(route.query.destination) ?? '').trim())
+const start = computed(() => calendarDay(route.query.selectedStartDate))
+const end = computed(() => calendarDay(route.query.selectedEndDate))
+const length = computed(() => (start.value && end.value ? daysBetween(start.value, end.value) : 0))
+const people = computed(() => Math.max(1, Math.round(Number(first(route.query.people))) || 1))
+const interests = computed(() => interestsFrom(route.query.selectedPreferences))
+
+// an address that does not describe a trip we can plan: no destination, no dates, or more days than the planner takes
+const problem = computed(() => (!destination.value || length.value < 1 ? 'missing' : length.value > MAX_TRIP_DAYS ? 'tooLong' : ''))
+
+const dayMonth = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' })
+const range = computed(() => {
+  const [a, b] = [start.value, end.value]
+  if (!a || !b) return ''
+  return a.getFullYear() === b.getFullYear() ? `${dayMonth.format(a)} – ${dayMonth.format(b)} ${b.getFullYear()}` : `${dayMonth.format(a)} ${a.getFullYear()} – ${dayMonth.format(b)} ${b.getFullYear()}`
+})
+
+useSeoMeta({ title: () => copy.meta(destination.value).title, description: () => copy.meta(destination.value).description, robots: 'noindex' })
+
+// ── what comes back ──
+const status = ref(problem.value ? 'missing' : 'loading') // loading | ready | failed | missing
+const days = ref([])
+const selected = ref(null) // index of the day on the map, or null for every day
+const place = ref(null) // { description, imageUrl } from the destination lookup
+const placeDone = ref(false)
+const note = ref(null)
+let attempt = 0
+
+// typed in lower case ("kyoto, japan"), the name is capitalised for the heading; anything else is shown as typed
+const title = computed(() => (destination.value === destination.value.toLowerCase() ? destination.value.replace(/(^|[\s,-])(\p{L})/gu, (_, gap, letter) => gap + letter.toUpperCase()) : destination.value))
+const photo = computed(() => (place.value?.imageUrl && /^https?:\/\//i.test(place.value.imageUrl) ? place.value.imageUrl : ''))
+const about = computed(() => (place.value?.description && place.value.description !== 'No description available' ? place.value.description : ''))
+// the arch is there from the start with its flat stand-in, so the photo does not push the heading when it arrives
+const showArch = computed(() => Boolean(photo.value) || !placeDone.value)
+const stopCount = computed(() => days.value.reduce((sum, day) => sum + day.coordinates.length, 0))
+const announcement = computed(() => (status.value === 'ready' ? `Your ${copy.days(days.value.length)} are ready. ${copy.stops(stopCount.value)} on the map.` : ''))
+// the map sits beside the days only while there are days to show it for
+const alone = computed(() => status.value === 'missing' || status.value === 'failed')
+
+async function loadPlace(mine) {
+  placeDone.value = false
+  place.value = null
+  try {
+    const data = await $fetch('/api/GetLocationByName', { query: { destination: destination.value } })
+    if (mine === attempt && data && !data.error) place.value = data
+  } catch {
+    // the page works without the header photo and description
+  }
+  if (mine === attempt) placeDone.value = true
+}
+
+async function load() {
+  if (problem.value) return
+  const mine = ++attempt
+  status.value = 'loading'
+  days.value = []
+  selected.value = null
+  loadPlace(mine)
+  try {
+    const preferences = interests.value.join(',')
+    const reply = await $fetch('/api/GetItinerary', {
+      query: { days: length.value, destination: destination.value, ...(preferences ? { selectedPreferences: preferences } : {}) },
+      responseType: 'text',
+    })
+    if (mine !== attempt) return
+    const parsed = parseItinerary(reply)
+    if (!parsed.length) throw new Error('the reply was not a plan')
+    days.value = parsed
+    status.value = 'ready'
+  } catch {
+    if (mine === attempt) status.value = 'failed'
+  }
+}
+
+/** Try again: the button that was pressed goes away, so the keyboard moves on to the "drafting" note. */
+async function retry() {
+  load()
+  await nextTick()
+  note.value?.focus()
+}
+
+onMounted(() => {
+  load()
+  // the map library is large: fetch it while the plan is being drafted, so the map is there the moment the days are
+  if (!problem.value) import('mapbox-gl').catch(() => {})
+})
+
+// ── the map ──
+const mapCard = ref(null)
+const presses = ref(0) // counts presses of a day button, so the map fits its view again even when the choice did not change
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+function pick(index) {
+  selected.value = index
+  presses.value++
+  // in the phone layout the map is above the days: bring it into view when a day is chosen from far below
+  if (index !== null && window.matchMedia('(max-width: 979px)').matches) {
+    mapCard.value?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' })
+  }
+}
+const toggle = (index) => pick(selected.value === index ? null : index)
+</script>
+
+<template>
+  <div class="landing plan flex-grow">
+    <div class="plan__wrap" :class="{ 'plan__wrap--alone': alone }">
+      <header class="plan__head">
+        <template v-if="status !== 'missing'">
+          <NuxtLink class="plan__back" to="/vacationForm"><ArrowLeft aria-hidden="true" :stroke-width="2" />{{ copy.back }}</NuxtLink>
+          <div class="plan__intro">
+            <div class="plan__who">
+              <h1>{{ title }}</h1>
+              <ul class="plan__facts" :aria-label="copy.facts">
+                <li class="fact"><Calendar aria-hidden="true" :stroke-width="1.75" />{{ range }} <span class="mono">{{ copy.days(length) }}</span></li>
+                <li class="fact"><Users aria-hidden="true" :stroke-width="1.75" />{{ copy.people(people) }}</li>
+                <li v-for="interest in interests" :key="interest" class="fact fact--plain">{{ interest }}</li>
+              </ul>
+            </div>
+            <LandingPhoto v-if="showArch" class="plan__arch" shape="arch" standin="var(--vp-standin-3)" :src="photo" alt="" :width="600" :height="800" eager />
+          </div>
+
+          <div v-if="status === 'loading'" ref="note" class="plan__note" role="status" tabindex="-1">
+            <p class="plan__note-title">{{ copy.loading.title }}</p>
+            <p>{{ copy.loading.text }}</p>
+          </div>
+          <div v-else-if="status === 'failed'" class="plan__fail">
+            <LandingAlert id="plan-failed">{{ copy.failed.text(title) }}</LandingAlert>
+            <div class="plan__actions">
+              <LandingButton size="lg" arrow @click="retry">{{ copy.failed.retry }}</LandingButton>
+              <LandingButton to="/vacationForm" variant="ghost" size="lg">{{ copy.failed.change }}</LandingButton>
+            </div>
+          </div>
+
+          <p v-if="about" class="plan__about">{{ about }}</p>
+        </template>
+        <h1 v-else>{{ copy.missing.title }}</h1>
+      </header>
+
+      <section v-if="status === 'missing'" class="plan__days">
+        <LandingCard>
+          <div class="plan__empty">
+            <p>{{ problem === 'tooLong' ? copy.missing.tooLong(MAX_TRIP_DAYS) : copy.missing.text }}</p>
+            <LandingButton to="/vacationForm" size="lg" arrow>{{ copy.missing.cta }}</LandingButton>
+          </div>
+        </LandingCard>
+      </section>
+
+      <template v-else>
+        <div v-if="!alone" ref="mapCard" class="plan__map">
+          <div class="mapcard">
+            <div v-if="status === 'ready'" class="mapcard__bar" role="group" :aria-label="copy.map.group">
+              <button class="pick" type="button" :aria-pressed="selected === null" @click="pick(null)">{{ copy.map.all }}</button>
+              <button v-for="(day, i) in days" :key="day.number" class="pick" type="button" :aria-pressed="selected === i" :disabled="!day.coordinates.length" @click="pick(i)">
+                <span class="pick__dot" :class="`pick__dot--${toneOfDay(i)}`" aria-hidden="true" />{{ copy.day.label(day.number) }}
+              </button>
+            </div>
+            <div class="mapcard__map">
+              <TripMap v-if="status === 'ready'" :days="days" :selected="selected" :refit="presses" />
+              <div v-else class="mapcard__wait">
+                <span class="mapcard__tile"><MapPin aria-hidden="true" :stroke-width="1.75" /></span>
+                <p>{{ copy.loading.map }}</p>
+              </div>
             </div>
           </div>
         </div>
-     
-        <p class="destination-description font-serif">{{ destinationData.description }}</p>
-   
-      </div>
 
-      <h1 v-else class="text-2xl font-semibold mb-4">{{ `${days} days vacation in ${destination}` }}</h1>
-      
-      <div v-if="!loadingItinerary" class="content-under-image">
-        <ul class="mt-8">
-          <li v-for="(day, index) in formattedItinerary" :key="index" class="mb-8">
-            <hr>
-            <h2 @click="showMap(index)" class="text-xl font-semibold mb-4 cursor-pointer ml-4 mt-5 font-serif">{{ day.title }}</h2>
-            <ul>
-              <li v-for="activity in day.activities" :key="activity" class="ml-4 mb-1 font-thin font-serif">{{ activity }}</li>
-            </ul>
-          </li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="right-section">
-      <div v-if="loadingMap" class="loading-container">
-        <div class="spinner"></div>
-        <p>Loading map...</p>
-      </div>
-      <div v-else>
-        <MapWithMarkers
-          v-if="showMapComponent && itinerary"
-          :coordinates-array="selectedDayCoordinates"
-          :destination-names="selectedDayNames"
-        />
-        <MapWithMarkersAllDays
-          v-else-if="itinerary"
-          :coordinates-array="allDaysCoordinates"
-          :destination-names="allDaysNames"
-        />
-      </div>
+        <section v-if="!alone" class="plan__days" :aria-busy="status === 'loading'">
+          <p class="sr-only" role="status">{{ announcement }}</p>
+          <template v-if="status === 'loading'">
+            <TripDay v-for="n in length" :key="n" :number="n" :tone="toneOfDay(n - 1)" />
+          </template>
+          <template v-else>
+            <TripDay v-for="(day, i) in days" :key="day.number" :number="day.number" :day="day" :tone="toneOfDay(i)" :selected="selected === i" @toggle="toggle(i)" />
+          </template>
+        </section>
+      </template>
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      itinerary: null,
-      formattedItinerary: [],
-      selectedDayIndex: null,
-      showMapComponent: false,
-      loadingItinerary: true,
-      loadingMap: true,
-      days: 0,
-      destinationData: null,
-      startDate: null,
-      endDate: null,
-      peopleNumber: null
-    };
-  },
-  computed: {
-    destination() {
-      return this.$route.query.destination;
-    },
-    selectedPreferences() {
-      return this.$route.query.selectedPreferences ? JSON.parse(this.$route.query.selectedPreferences) : [];
-    },
-    selectedDayCoordinates() {
-      return this.itinerary && this.selectedDayIndex !== null ? this.itinerary[this.selectedDayIndex].coordinates : [];
-    },
-    selectedDayNames() {
-      return this.itinerary && this.selectedDayIndex !== null ? this.itinerary[this.selectedDayIndex].names : [];
-    },
-    allDaysCoordinates() {
-      return this.itinerary ? this.itinerary.map(day => day.coordinates) : [];
-    },
-    allDaysNames() {
-      return this.itinerary ? this.itinerary.map(day => day.names) : [];
-    },
-    formattedStartDate() {
-      return this.startDate ? this.startDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, ' ') : '';
-    },
-    formattedEndDate() {
-      return this.endDate ? this.endDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, ' ') : '';
-    }
-  },
-  methods: {
-    async fetchItinerary() {
-      try {
-        const { destination, selectedPreferences } = this.$route.query;
-        const response = await fetch(`/api/GetItinerary?days=${this.days}&destination=${destination}&selectedPreferences=${selectedPreferences}`);
-        const result = await response.text();
-        this.processItinerary(result);
-        this.loadingItinerary = false;
-      } catch (error) {
-        console.error('Error:', error.message);
-      }
-    },
-    processItinerary(result) {
-      const daysArray = result.split(/Day \d+:/).filter(str => str.trim() !== '');
-      this.itinerary = daysArray.map(day => {
-        const coordinatesRegex = /\[(.*?)\]/g;
-        const namesRegex = /\{(.*?)\}/g;
-
-        const coordinateMatches = day.match(coordinatesRegex);
-        const nameMatches = day.match(namesRegex);
-
-        const coordinates = coordinateMatches ? coordinateMatches.map(match => {
-          const [latitude, longitude] = match.replace(/[\[\]]/g, '').split(',').map(parseFloat);
-          return [latitude, longitude];
-        }) : [];
-
-        const names = nameMatches ? nameMatches.map(match => match.replace(/[\{\}]/g, '')) : [];
-        
-        const activities = day.replace(coordinatesRegex, '').replace(namesRegex, '').trim().split('\n').map(activity => activity.trim());
-
-        return { activities, coordinates, names };
-      });
-
-      this.formattedItinerary = this.itinerary.map((day, index) => {
-        const dayTitle = `Day ${index + 1} - ${day.activities[0]}`;
-        const dayActivities = day.activities.slice(1);
-        return { title: dayTitle, activities: dayActivities };
-      });
-    },
-    async fetchDestinationData() {
-      try {
-        const { destination } = this.$route.query;
-        const response = await fetch(`/api/GetLocationByName?destination=${destination}`);
-        const data = await response.json();
-        
-        if (data.error) {
-          console.error('Error fetching destination data:', data.error);
-        } else {
-          this.destinationData = data;
-        }
-      } catch (error) {
-        console.error('Error:', error.message);
-      }
-    },
-
-    showMap(index) {
-      if (this.selectedDayIndex === index) {
-        this.showMapComponent = !this.showMapComponent;
-      } else {
-        this.hideMap();
-        this.selectedDayIndex = index;
-        this.showMapComponent = true;
-      }
-    },
-    hideMap() {
-      this.showMapComponent = false;
-    },
-    async fetchMapData() {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      this.loadingMap = false;
-    }
-  },
-  watch: {
-    selectedDayIndex(newValue, oldValue) {
-      if (newValue !== oldValue) {
-        this.hideMap();
-      }
-    },
-    loadingItinerary(newValue) {
-      console.log("loadingItinerary:", newValue);
-    },
-    loadingMap(newValue) {
-      console.log("loadingMap:", newValue);
-    }
-  },
-  async mounted() {
-
-    if (this.loadingItinerary || this.loadingMap) {
-      alert("Notice! The loading animation on the next page is broken, just wait around 20 secounds and the vacation plan will show up :>");
-    }
-    const preferences = this.$route.query.selectedPreferences;
-    this.peopleNumber = this.$route.query.people
-    this.startDate = new Date(this.$route.query.selectedStartDate);
-    this.endDate = new Date(this.$route.query.selectedEndDate);
-    const timeDiff = this.endDate - this.startDate;
-    this.days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)) + 1;
-
-    await this.fetchDestinationData();
-    await this.fetchItinerary();
-    await this.fetchMapData();
-  }
-};
-</script>
-
 <style scoped>
-body {
-  margin: 0;
-  padding: 0;
-}
+.plan { --bar: var(--app-bar, 66px); }
+.plan__wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: 'head map' 'days map'; grid-template-rows: auto 1fr; gap: 28px clamp(24px, 3.5vw, 48px); align-items: start; max-width: var(--vp-wrap); margin: 0 auto; padding: 16px var(--vp-pad) clamp(48px, 7vw, 96px); }
+.plan__wrap--alone { grid-template-columns: minmax(0, 640px); grid-template-areas: 'head' 'days'; grid-template-rows: auto; row-gap: 0; }
+.plan__wrap--alone .plan__days { margin-top: 28px; }
+.plan__head { grid-area: head; min-width: 0; padding-top: calc(clamp(20px, 3vw, 36px) - 16px); } /* the wide layout's 16px top is where the pinned map starts */
+.plan__days { grid-area: days; display: grid; gap: 14px; min-width: 0; }
+.plan__map { grid-area: map; position: sticky; top: calc(var(--bar) + 16px); height: calc(100vh - var(--bar) - 32px); min-height: 440px; scroll-margin-top: calc(var(--bar) + 12px); }
 
-.vacation-itinerary-container {
-  display: flex;
-  height: 100vh;
-}
+.plan__back { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 18px; padding-block: 6px; color: var(--vp-ink-2); font: 500 15px/1 var(--vp-font); text-decoration: none; transition: color .2s; }
+.plan__back:hover { color: var(--vp-blue); }
+.plan__back svg { width: 18px; height: 18px; }
 
-.left-section {
-  width: 50%;
-  padding-right: 20px;
-  overflow-y: auto;
-}
+.plan__intro { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; align-items: end; }
+.plan__who { min-width: 0; }
+.plan h1 { margin: 0; font: 800 clamp(2.2rem, 4.6vw, 3.4rem)/1.03 var(--vp-font); letter-spacing: -.025em; text-wrap: balance; overflow-wrap: anywhere; }
+.plan__facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; padding: 0; list-style: none; }
+.fact { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px 9px 12px; border-radius: 999px; background: var(--vp-wash); color: var(--vp-ink); font: 600 14.5px/1 var(--vp-font); }
+.fact svg { width: 16px; height: 16px; color: var(--vp-blue); }
+.fact .mono { margin-left: 2px; color: var(--vp-blue-deep); font-size: 12px; white-space: nowrap; }
+.fact--plain { padding-left: 14px; background: var(--vp-paper); color: var(--vp-ink-2); font-weight: 500; }
+.plan__arch { width: clamp(104px, 10vw, 136px); aspect-ratio: 3 / 4; }
+.plan__about { max-width: 54ch; margin: 22px 0 0; color: var(--vp-ink-2); text-wrap: pretty; }
 
-.right-section {
-  width: 50%;
-  padding-left: 20px;
-}
+.plan__note { margin-top: 22px; color: var(--vp-ink-2); font: 400 15px/1.5 var(--vp-font); }
+.plan__note p { margin: 0; }
+.plan__note .plan__note-title { color: var(--vp-ink); font: 700 17px/1.3 var(--vp-font); letter-spacing: -.015em; }
+.plan__empty { display: grid; gap: 18px; color: var(--vp-ink-2); }
+.plan__empty p { margin: 0; }
+.plan__empty .btn { justify-self: start; }
+.plan__fail { display: grid; gap: 16px; margin-top: 22px; }
+.plan__actions { display: flex; flex-wrap: wrap; gap: 12px; }
 
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
+/* the map card: a hairline card holding the day buttons and the map */
+.mapcard { display: flex; flex-direction: column; height: 100%; border: 1px solid var(--vp-line); border-radius: 12px; background: #fff; overflow: hidden; }
+.mapcard__bar { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; padding: 12px; border-bottom: 1px solid var(--vp-line); }
+.mapcard__map { position: relative; flex: 1; min-height: 0; }
+.mapcard__wait { display: grid; place-content: center; justify-items: center; gap: 14px; height: 100%; padding: 24px; background: var(--vp-paper); color: var(--vp-ink-2); text-align: center; }
+.mapcard__wait p { max-width: 26ch; margin: 0; font: 400 15px/1.5 var(--vp-font); }
+.mapcard__tile { display: grid; place-items: center; width: 48px; height: 48px; border-radius: var(--vp-radius); background: var(--vp-wash); color: var(--vp-blue); }
+.mapcard__tile svg { width: 24px; height: 24px; }
 
-.spinner {
-  border: 4px solid rgba(0, 0, 0, 0.1);
-  border-left-color: #7983ff;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  animation: spin 1s linear infinite;
-}
+/* the day buttons: the trip form's chip; the dot is the day's pill colour, the colour of its stops on the map */
+.pick { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 44px; padding: 0 6px; border: 1px solid color-mix(in srgb, var(--vp-ink-3) 75%, #fff); border-radius: var(--vp-radius); background: #fff; color: var(--vp-ink); font: 600 14px/1 var(--vp-font); white-space: nowrap; cursor: pointer; transition: background-color .25s var(--vp-ease), border-color .25s var(--vp-ease), color .25s var(--vp-ease); }
+.pick:hover:not(:disabled):not([aria-pressed="true"]) { border-color: var(--vp-blue); color: var(--vp-blue); }
+.pick[aria-pressed="true"] { border-color: var(--vp-blue); background: var(--vp-blue); color: #fff; }
+.pick:disabled { border-color: var(--vp-line); color: var(--vp-ink-3); opacity: .55; cursor: default; }
+.pick__dot { width: 10px; height: 10px; border: 1.5px solid rgba(15, 26, 54, .18); border-radius: 50%; }
+.pick[aria-pressed="true"] .pick__dot { border-color: #fff; }
+.pick__dot--blue { background: var(--vp-blue); }
+.pick__dot--coral { background: var(--vp-coral); }
+.pick__dot--peach { background: var(--vp-peach); }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+/* under 980px the map sits above the days, in the page's flow */
+@media (max-width: 979px) {
+  .plan__wrap { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'head' 'map' 'days'; grid-template-rows: auto; gap: 24px; padding-top: clamp(20px, 3vw, 36px); }
+  .plan__wrap--alone { grid-template-areas: 'head' 'days'; }
+  .plan__head { padding-top: 0; }
+  .plan__map { position: relative; top: auto; height: auto; min-height: 0; }
+  .mapcard { height: auto; }
+  .mapcard__map { flex: none; height: clamp(360px, 56vh, 520px); }
 }
-
-.marker {
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  font-size: 14px;
-  font-weight: bold;
-  text-align: center;
-}
-
-.destination-data {
-  margin-bottom: 20px;
-}
-
-.image-container {
-  position: relative;
-}
-
-.destination-image {
-  width: 100%;
-  height: 300px;
-  object-fit: cover;
-  filter: brightness(80%);
-}
-
-.info-container {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  padding-left: 20px;
-  width: calc(100% - 40px);
-}
-
-.destination-name {
-  font-weight: 700;
-  color: white;
-  font-size: 60px;
-  margin-bottom: 10px;
-  padding: 10px;
-  background-color: transparent;
-}
-
-.bubbles-container {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.bubble {
-  background-color: rgba(128, 128, 128, 0.7);
-  color: white;
-  padding: 5px 10px;
-  border-radius: 15px;
-  font-size: 14px;
-  margin-bottom: 5px;
-}
-
-.content-under-image {
-  padding-left: 20px;
-}
-
-.destination-description {
-  color: black;
-  padding-left: 40px;
-  padding-top: 20px;
-  margin-top: 10px;
-}
-
-/* Notification style */
-.notification {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background-color: #333;
-  color: white;
-  padding: 10px;
-  border-radius: 5px;
-  z-index: 1000;
+@media (max-width: 560px) {
+  /* the arch stays beside the name; the chips take the full width under both, so they never wrap beside it */
+  .plan__intro { grid-template-areas: 'title arch' 'facts facts'; gap: 0 14px; }
+  .plan__who { display: contents; }
+  .plan h1 { grid-area: title; }
+  .plan__facts { grid-area: facts; margin-top: 16px; }
+  .plan__arch { grid-area: arch; width: 92px; }
+  .fact { padding: 8px 12px 8px 10px; font-size: 14px; }
 }
 </style>

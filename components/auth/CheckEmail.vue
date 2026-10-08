@@ -71,10 +71,10 @@ const label = computed(() => (busy.value ? copy.sending : waiting.value ? copy.r
       </div>
     </div>
 
-    <AuthAlert v-if="failure" id="check-failure" :hint="failure.hint">
+    <LandingAlert v-if="failure" id="check-failure" :hint="failure.hint">
       {{ failure.message }}
       <template v-if="failure.action" #action><NuxtLink :to="failure.action.to">{{ failure.action.label }}</NuxtLink></template>
-    </AuthAlert>
+    </LandingAlert>
 
     <div>
       <LandingButton class="check__resend" variant="ghost" size="lg" block :disabled="busy || waiting" @click="send">{{ label }}</LandingButton>

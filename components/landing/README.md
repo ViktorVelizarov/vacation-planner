@@ -4,7 +4,8 @@ The home page (`pages/index.vue`) is assembled from these components. Its look i
 
 ```
 pages/index.vue            composes the sections; hands each one its slice of the content
-layouts/landing.vue        bare layout (skip link + <html> class); other pages keep layouts/default.vue
+layouts/landing.vue        bare layout for the home page and the account pages (skip link + <html> class)
+layouts/default.vue        the app's working pages (trip form, itinerary): white bar with brand + account, footer
 utils/landing-content.js   every string, number and image the page shows, in one place
 assets/css/landing.css     fonts, --vp-* design tokens, base type (registered in nuxt.config.js)
 assets/images/landing/     the photographs (+ .webp.json: the prompt each one was generated from)
@@ -17,7 +18,7 @@ public/fonts/              Bricolage Grotesque + Spline Sans Mono (self-hosted)
 - **Real data instead of the samples.** Each section takes plain props, so a slice of `landingContent` can be replaced with anything of the same shape, for example in `pages/index.vue`:
   `const { data: destinations } = await useFetch('/api/destinations')` then `<LandingSamples :destinations="destinations" ... />`.
 - **Samples stay labelled.** Ratings, trip lengths, quotes and the request in the search card are illustrative. Keep "Sample" in their strings until they are real (PRODUCT.md, "Sample means sample").
-- **The search card is read-only on purpose.** It shows a sample request and links to the real form. Don't turn its fields into inputs here; prefill the form from a link or query string instead.
+- **The search card is read-only on purpose.** It shows a sample request and links to the real form. Don't turn its fields into inputs here; prefill the form from a link or query string instead. The real form (`pages/vacationForm`) is drawn in the card's own vocabulary: the same four fields, each a wash icon tile, a mono key and a control.
 - **Reusing a piece elsewhere.** `--vp-*` tokens and fonts are global, so `LandingButton`, `LandingPill`, `LandingPhoto` and `LandingBrand` work anywhere. Sections rely on the shared type and `.mono` / `.eyebrow` / `.sec` classes, which apply inside an element with class `landing` (the landing layout provides it).
 
 ## Components
@@ -26,7 +27,7 @@ public/fonts/              Bricolage Grotesque + Spline Sans Mono (self-hosted)
 |---|---|---|
 | `LandingHero` | Full-bleed photo, nav, two-line headline | `image`, `headline[]`, `lead`, `nav[]`, `account`, `cta` |
 | `LandingNav` | White nav over the photo | `links[]`, `account`, `cta` |
-| `LandingAccount` | Nav control: Sign in, or an initials disc + Sign out (icon-only on phones). Reads the session itself | `account` |
+| `LandingAccount` | Nav control: Sign in, or an initials disc + Sign out (icon-only on phones). Reads the session itself. `ink` draws it for a white bar | `account`, `ink` |
 | `LandingFinder` | Tabbed search-style card at the hero's edge (a real tablist) | `plan`, `sample`, `cta` |
 | `LandingHowItWorks` | Three numbered steps beside two arch photos | `eyebrow`, `title`, `steps[]`, `arches` |
 | `LandingSamples` | Section heading + destination cards | `eyebrow`, `title`, `destinations[]`, `cta` |
@@ -40,6 +41,9 @@ public/fonts/              Bricolage Grotesque + Spline Sans Mono (self-hosted)
 | `LandingPill` | Number / day capsule, `tone` blue / coral / peach | `tone` |
 | `LandingPhoto` | Processed photo slot (halftone + grain), `shape` rect / arch | `src`, `alt`, `shape`, `standin` |
 | `LandingBrand` | Arch mark + wordmark | `to`, `ink` |
+| `LandingStage` | The body of an account or app page: headline, short lead, the page's content, and the arch photograph beside it (hidden under 980px) | `title`, `lead`, `art` |
+| `LandingCard` | The 14px hairline card (`attached` squares the corner under a tab strip) | `attached` |
+| `LandingSkipLink` | "Skip to content" for keyboard users, pointing at `<main id="main">` | none |
 
 `cta` is always `{ label, to }`. Each component's header comment lists the exact shape of its other props.
 
@@ -51,4 +55,14 @@ public/fonts/              Bricolage Grotesque + Spline Sans Mono (self-hosted)
 - Never tint or restyle a photo per image; `LandingPhoto` and `LandingHero` apply the same halftone + grain recipe to all of them.
 
 ## Account pages
-Four pages share one frame (`AuthShell`: brand and way back, headline, the page's card, the Lisbon arch) in this same design world: `pages/sign-in.vue` and `pages/sign-up.vue` (`AuthPage` puts the Sign in / Create account tab strip on top of an `AuthCard` holding `AuthForm` and `AuthField`), `pages/check-email.vue` ("Check your inbox": `AuthCheckEmail`, with the Resend button and its countdown) and `pages/verify-email.vue` (where the emailed link lands: `AuthConfirm`, one button). `AuthAlert` is the error box they all use. Their copy is in `utils/auth-content.js`; the checks that run in the form are the server's own (`server/auth/rules.js`). Creating an account does not sign anyone in: it sends them to "Check your inbox", and pressing the button on the emailed link confirms the address, signs in and opens the trip form. The email itself is `server/auth/mail-template.js`. The server side lives in `server/auth/` and `server/api/auth/`; see the root README ("Accounts") for the environment variables and deployment.
+Four pages share one frame (`AuthShell`: brand and way back above a `LandingStage` with the headline, the page's `LandingCard` and the Lisbon arch) in this same design world: `pages/sign-in.vue` and `pages/sign-up.vue` (`AuthPage` puts the Sign in / Create account tab strip on top of a card holding `AuthForm` and `AuthField`), `pages/check-email.vue` ("Check your inbox": `AuthCheckEmail`, with the Resend button and its countdown) and `pages/verify-email.vue` (where the emailed link lands: `AuthConfirm`, one button). `LandingAlert` is the error box they all use. Their copy is in `utils/auth-content.js`; the checks that run in the form are the server's own (`server/auth/rules.js`). Creating an account does not sign anyone in: it sends them to "Check your inbox", and pressing the button on the emailed link confirms the address, signs in and opens the trip form. The email itself is `server/auth/mail-template.js`. The server side lives in `server/auth/` and `server/api/auth/`; see the root README ("Accounts") for the environment variables and deployment.
+
+## Trip form
+`pages/vacationForm/index.vue` is the real version of the search card, on the same `LandingStage` and `LandingCard` with the Kyoto arch beside it. Each question is a `TripField` (`components/trip/`): a wash icon tile, a mono key, a control that shares one visible edge colour. The controls are `TripInput`, `DatePicker` (the shadcn range calendar in a popover, themed in `components/DatePicker.vue`; it starts empty, shows one month on phones, and switches off days that would make a trip longer than `MAX_TRIP_DAYS`), `TripInterests` (the shadcn toggle group as chips) and `TripTravelers` (a stepper that stops at 1 and 10). The words are in `utils/trip-content.js`. Destination and dates are required before it plans; what it hands to `/itinerary` (the whole of `formData` as the query) is unchanged. The page sits in `layouts/default.vue`, whose bar and footer it shares with the itinerary page.
+
+## Itinerary page
+`pages/Itinerary/index.vue` is where the trip form leads (`/itinerary?destination=…&selectedStartDate=…`, the query the form sends). The header is the trip as it was asked for, read from the address, so it needs no waiting: the destination, chips for dates, travellers and interests, and the destination's arch photograph and description (a faster lookup that fills in on its own). The plan itself takes around 20 seconds, so the page shows one placeholder card per day and a note that says so. When the plan cannot be drafted, or the address is not a trip (no destination or dates, or more than `MAX_TRIP_DAYS`), the page says that and offers the way on (Try again, Change the trip, Plan a trip) instead of a browser pop-up.
+
+Reading the model's reply is `utils/itinerary.js`: plain functions with no Vue in them (`parseItinerary`, `calendarDay`, `daysBetween`, `interestsFrom`, `toneOfDay`), so they can be tested alone. The words are in `utils/itinerary-content.js`. The cards are `TripDay` (`components/trip/Day.vue`): a Day pill in the fixed blue, coral, peach order, the title, the stops numbered like their markers, and a head that is one button showing that day on the map. The map is `TripMap` (`components/trip/Map.vue`): one Mapbox map in the light style tinted toward the page, showing every day's stops at once (each in its day's pill colour) or one day's stops numbered 1, 2, 3 and joined by a walking route. A marker opens a card with the place's photo and first sentence; it is built from DOM nodes, never from an HTML string, because the names come from a language model.
+
+Under 980px the map sits above the days, the day buttons wrap into a grid under its edge, and choosing a day scrolls the map into view. In the wide layout the map is pinned just under the header: `layouts/default.vue` sets `--app-bar` (the header's height) for that. The page needs no setting of its own; the Mapbox token in `TripMap` is a public `pk.` token and should be restricted to this site's addresses in the Mapbox dashboard.

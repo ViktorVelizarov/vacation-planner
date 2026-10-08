@@ -25,9 +25,9 @@ const withRedirect = (path) => {
       <NuxtLink class="auth__tab" :to="withRedirect('/sign-in')">{{ authContent.tabs.signin }}</NuxtLink>
       <NuxtLink class="auth__tab" :to="withRedirect('/sign-up')">{{ authContent.tabs.signup }}</NuxtLink>
     </nav>
-    <AuthCard attached>
+    <LandingCard attached>
       <AuthForm :mode="mode" />
-    </AuthCard>
+    </LandingCard>
   </AuthShell>
 </template>
 

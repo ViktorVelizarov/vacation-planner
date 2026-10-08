@@ -19,9 +19,9 @@ const { pending } = useAuth()
 <template>
   <AuthShell :title="authContent.check.title">
     <template #lead>{{ authContent.check.lead }} <strong class="address">{{ pending?.email }}</strong></template>
-    <AuthCard>
+    <LandingCard>
       <AuthCheckEmail />
-    </AuthCard>
+    </LandingCard>
   </AuthShell>
 </template>
 

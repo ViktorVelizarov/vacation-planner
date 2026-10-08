@@ -25,7 +25,9 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
   >
     <RangeCalendarHeader>
       <RangeCalendarPrevButton />
-      <RangeCalendarHeading />
+      <RangeCalendarHeading v-slot="{ headingValue }">
+        {{ headingValue.replace(`${props.calendarLabel ?? 'Event Date'}, `, '').replace(' - ', ' – ') }}
+      </RangeCalendarHeading>
       <RangeCalendarNextButton />
     </RangeCalendarHeader>
 

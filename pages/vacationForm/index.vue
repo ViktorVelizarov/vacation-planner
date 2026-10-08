@@ -1,118 +1,103 @@
-<template >
-   <div class="flex-grow" style="background-image: url('https://cdn.vectorstock.com/i/500p/70/79/blue-abstract-watercolor-background-vector-31357079.jpg'); background-size: cover; background-position: center;">
-  <div class="mb-10 container mx-auto px-4 py-8 max-w-xl text-center mt-10  bg-blur-lg bg-white bg-opacity-75 backdrop-filter backdrop-blur-lg backdrop-saturate-150 backdrop-contrast-75 backdrop-brightness-125 backdrop-opacity-50 border-opacity-25 rounded-lg shadow-lg">
-    <h1 class="text-4xl font-bold mb-10">Plan your next adventure</h1>
-    <hr class="mb-5">
-    <form @submit.prevent="handleSubmit" class="max-w-md mx-auto">
-      <div class="mb-8 text-left">
-        <label for="destination" class="block text-lg font-medium text-gray-700 mb-4">What is your destination?</label>
-        <input type="text" id="destination" v-model="formData.destination" required
-          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-      </div>
-      <div class="mb-8 text-left">
-        <label for="days" class="block text-lg font-medium text-gray-700 mb-4">Chose a date (max 10 days):</label>
-        <DatePicker @update:selectedDateRange="updateSelectedDateRange"></DatePicker>
-      </div>
-      <div class="mb-8 text-left">
-        <label class="block text-lg font-medium text-gray-700 mb-4">Select the kind of activities you want to do:</label>
-        <div class="flex flex-wrap justify-center">
-          <ToggleGroup type="multiple" v-model="selectedPreferences">
-            <ToggleGroupItem value="Kid Friendly" class="bg-slate-300 m-1">
-              Kid Friendly
-            </ToggleGroupItem>
-            <ToggleGroupItem value="Museums" class="bg-slate-300 m-1">
-              Museums
-            </ToggleGroupItem>
-            <ToggleGroupItem value="Shopping" class="bg-slate-300 m-1">
-              Shopping
-            </ToggleGroupItem>
-            <ToggleGroupItem value="Historical" class="bg-slate-300 m-1">
-              Historical
-            </ToggleGroupItem>
-            <ToggleGroupItem value="Art & Cultural" class="bg-slate-300 m-1">
-              Art & Cultural
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
-      </div>
-      <div class="mb-8 text-left">
-        <label class="block text-lg font-medium text-gray-700 mb-4">How many people are going?</label>
-        <div class="flex items-center">
-          <button type="button" @click="decreasePeople" class="px-3 py-1 bg-gray-300 rounded-l">-</button>
-          <span class="px-4">{{ formData.people }}</span>
-          <button type="button" @click="increasePeople" class="px-3 py-1 bg-gray-300 rounded-r">+</button>
-        </div>
-      </div>
-      <button type="submit"
-        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-        Submit
-      </button>
-    </form>
-  </div>
-</div>
-</template>
+<script setup>
+import { Calendar, Compass, MapPin, Users } from 'lucide-vue-next'
 
-<script>
+// The trip form: where, when, what you like and how many are going, then "Plan my trip". It is the real version of the
+// search card on the home page (same four fields, same look), and it hands the answers to the itinerary page exactly as
+// it always has: the whole of `formData` as the query of /itinerary. Copy lives in utils/trip-content.js.
+// Destination and dates are asked for before it will plan (a trip without dates silently became a 1-day plan), and the
+// dates cannot run past the 10 days the page has always said it takes.
+useSeoMeta({ title: tripContent.meta.title, description: tripContent.meta.description, robots: 'noindex' })
 
+const copy = tripContent
+const router = useRouter()
 
-export default {
-  data() {
-    return {
-      formData: {
-        destination: '',
-        selectedStartDate: null,
-        selectedEndDate: null,
-        selectedPreferences: [],
-        people: 1 // Added people property
-      }
-    };
-  },
-  computed: {
-    selectedPreferences: {
-      get() {
-        return this.formData.selectedPreferences;
-      },
-      set(value) {
-        this.formData.selectedPreferences = value;
-      }
-    }
-  },
-  methods: {
-    handleSubmit() {
-      const { destination, selectedStartDate, selectedEndDate, selectedPreferences, people } = this.formData;
+const formData = reactive({
+  destination: '',
+  selectedStartDate: null,
+  selectedEndDate: null,
+  selectedPreferences: [],
+  people: 1,
+})
+const errors = reactive({ destination: '', dates: '' })
+const busy = ref(false)
 
-      console.log("Destination:", destination);
-      console.log("Selected Start Date:", selectedStartDate);
-      console.log("Selected End Date:", selectedEndDate);
-      console.log("Selected Preferences:", selectedPreferences);
-      console.log("Number of People:", people); // Log number of people
+const daysBetween = (start, end) => Math.round((end - start) / 86400000) + 1
 
-      // Navigate to /itinerary with submitted data
-      this.$router.push({ path: '/itinerary', query: this.formData });
-    },
-    updateSelectedDateRange(start, end) {
-      this.formData.selectedStartDate = start;
-      this.formData.selectedEndDate = end;
-    },
-    increasePeople() {
-      if (this.formData.people < 10) {
-        this.formData.people++;
-      }
-    },
-    decreasePeople() {
-      if (this.formData.people > 1) {
-        this.formData.people--;
-      }
-    }
+function updateSelectedDateRange(start, end) {
+  formData.selectedStartDate = start
+  formData.selectedEndDate = end
+  if (start && end) errors.dates = ''
+}
+watch(() => formData.destination, (value) => {
+  if (value.trim()) errors.destination = ''
+})
+
+function check() {
+  const { destination, selectedStartDate: start, selectedEndDate: end } = formData
+  errors.destination = destination.trim() ? '' : copy.destination.error
+  errors.dates = !start || !end ? copy.dates.errorMissing : daysBetween(start, end) > MAX_TRIP_DAYS ? copy.dates.errorTooLong : ''
+  return !errors.destination && !errors.dates
+}
+
+async function handleSubmit() {
+  if (busy.value) return
+  if (!check()) {
+    await nextTick()
+    document.getElementById(errors.destination ? 'trip-destination' : 'trip-dates')?.focus()
+    return
   }
-};
+  formData.destination = formData.destination.trim()
+  busy.value = true
+  try {
+    await router.push({ path: '/itinerary', query: formData })
+  } finally {
+    busy.value = false
+  }
+}
 </script>
 
+<template>
+  <div class="landing flex-grow">
+    <LandingStage :title="copy.title" :lead="copy.lead" :art="copy.art">
+      <LandingCard>
+        <form class="form" novalidate :aria-busy="busy" @submit.prevent="handleSubmit">
+          <TripField id="trip-dest" :icon="MapPin" :label="copy.destination.key" label-for="trip-destination" :error="errors.destination">
+            <TripInput
+              id="trip-destination"
+              v-model="formData.destination"
+              :placeholder="copy.destination.placeholder"
+              :invalid="Boolean(errors.destination)"
+              :describedby="errors.destination ? 'trip-dest-error' : undefined"
+            />
+          </TripField>
+
+          <TripField id="trip-when" :icon="Calendar" :label="copy.dates.key" label-for="trip-dates" :note="copy.dates.note" :error="errors.dates">
+            <DatePicker
+              id="trip-dates"
+              :invalid="Boolean(errors.dates)"
+              :describedby="errors.dates ? 'trip-when-error' : undefined"
+              labelledby="trip-when-key"
+              @update:selectedDateRange="updateSelectedDateRange"
+            />
+          </TripField>
+
+          <TripField id="trip-likes" :icon="Compass" :label="copy.interests.key" :note="copy.interests.note">
+            <TripInterests v-model="formData.selectedPreferences" :options="copy.interests.options" labelledby="trip-likes-key" />
+          </TripField>
+
+          <TripField id="trip-who" :icon="Users" :label="copy.travelers.key" :note="copy.travelers.note">
+            <TripTravelers v-model="formData.people" labelledby="trip-who-key" />
+          </TripField>
+
+          <LandingButton type="submit" size="lg" arrow block :disabled="busy">{{ busy ? copy.busy : copy.submit }}</LandingButton>
+          <p class="wait">{{ copy.wait }}</p>
+        </form>
+      </LandingCard>
+    </LandingStage>
+  </div>
+</template>
+
 <style scoped>
-.container {
-  text-align: center;
-}
-form {
-  text-align: left;
-}
+.form .btn { margin-top: 26px; }
+.wait { margin-top: 14px; text-align: center; color: var(--vp-ink-2); font: 400 14.5px/1.4 var(--vp-font); }
 </style>

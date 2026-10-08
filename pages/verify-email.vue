@@ -41,7 +41,7 @@ const copy = computed(() => (loggedIn.value ? authContent.already : authContent.
 
 <template>
   <AuthShell v-if="gone" :title="copy.title" :lead="copy.lead">
-    <AuthCard>
+    <LandingCard>
       <div class="gone">
         <LandingButton :to="loggedIn ? DEMO_ROUTE : '/sign-in'" size="lg" arrow block>{{ copy.submit }}</LandingButton>
         <div v-if="!loggedIn" class="gone__help">
@@ -52,7 +52,7 @@ const copy = computed(() => (loggedIn.value ? authContent.already : authContent.
           </p>
         </div>
       </div>
-    </AuthCard>
+    </LandingCard>
   </AuthShell>
 
   <AuthShell v-else :title="authContent.confirm.title">
@@ -60,9 +60,9 @@ const copy = computed(() => (loggedIn.value ? authContent.already : authContent.
       <template v-if="link?.email">{{ authContent.confirm.lead }} <strong class="address">{{ link.email }}</strong></template>
       <template v-else>{{ authContent.confirm.leadWithoutAddress }}</template>
     </template>
-    <AuthCard>
+    <LandingCard>
       <AuthConfirm :token="token" @gone="usedUp = true" />
-    </AuthCard>
+    </LandingCard>
   </AuthShell>
 </template>
 
