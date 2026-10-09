@@ -1,10 +1,11 @@
 <script setup>
 // The body of a page in the Blue Arch world, shared by the account pages and the trip form: one headline with a short
-// line under it, the page's own content in the default slot (usually a LandingCard), and one processed arch
-// photograph beside it on wide screens.
+// line under it, the page's own content in the default slot (usually a LandingCard), and photography beside it on wide
+// screens.
 //   title  the page's one heading
 //   lead   the line under it; a page that has to name something in it (an email address) fills the `lead` slot instead
-//   art    { src, width, height, place, coords } for the arch and its mono caption; hidden under 980px
+//   art    { src, width, height, place, coords } for one arch and its mono caption; a page that wants more than one
+//          photograph (the trip form's TripGalleryMosaic) fills the `art` slot instead. Hidden under 980px either way
 defineProps({
   title: { type: String, required: true },
   lead: { type: String, default: '' },
@@ -37,7 +38,7 @@ defineProps({
 
 .stage__art { display: grid; justify-items: center; gap: 18px; margin: 0; }
 .stage__arch { width: min(100%, 340px); aspect-ratio: 3 / 4; }
-.stage__art--gallery { display: block; position: sticky; top: calc(var(--app-bar, 66px) + 16px); }
+.stage__art--gallery { display: block; }
 .stage__art figcaption { color: var(--vp-ink-3); text-align: center; }
 
 @media (max-width: 980px) {

@@ -10,10 +10,6 @@ useSeoMeta({ title: tripContent.meta.title, description: tripContent.meta.descri
 
 const copy = tripContent
 const router = useRouter()
-const route = useRoute()
-
-// Three versions of the photos beside the form to choose from: /vacationForm?design=cluster | mosaic | reel (anything else keeps the single arch).
-const design = computed(() => ['cluster', 'mosaic', 'reel'].find((name) => name === route.query.design) ?? null)
 
 const formData = reactive({
   destination: '',
@@ -71,7 +67,7 @@ async function handleSubmit() {
 
 <template>
   <div class="landing flex-grow">
-    <LandingStage :title="copy.title" :lead="copy.lead" :art="copy.art">
+    <LandingStage :title="copy.title" :lead="copy.lead">
       <LandingCard>
         <form class="form" novalidate :aria-busy="busy" @submit.prevent="handleSubmit">
           <TripField id="trip-dest" :icon="MapPin" :label="copy.destination.key" label-for="trip-destination" :error="errors.destination">
@@ -107,11 +103,7 @@ async function handleSubmit() {
           <p v-else class="wait">{{ copy.wait }}<span v-if="trips && !trips.unlimited" class="wait__trips">{{ copy.trips.left(trips.left, trips.limit) }}</span></p>
         </form>
       </LandingCard>
-      <template v-if="design" #art>
-        <TripGalleryCluster v-if="design === 'cluster'" :photos="tripGallery" />
-        <TripGalleryMosaic v-else-if="design === 'mosaic'" :photos="tripGallery" />
-        <TripGalleryReel v-else :photos="tripGallery" />
-      </template>
+      <template #art><TripGalleryMosaic :photos="tripGallery" /></template>
     </LandingStage>
   </div>
 </template>

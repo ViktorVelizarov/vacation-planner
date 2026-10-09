@@ -19,7 +19,14 @@ export const itineraryContent = {
     label: (n) => `Day ${n}`,
     show: 'Show on map',
     showing: 'Showing on map',
+    onMap: 'on the map',
     noMap: 'No map locations',
+  },
+
+  // Folding the day cards: the row above them
+  fold: {
+    expand: 'Expand all',
+    collapse: 'Collapse all',
   },
 
   // While the plan is being drafted (around 20 seconds)

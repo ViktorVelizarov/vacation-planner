@@ -7,7 +7,8 @@ import { getAuthStore } from "../auth/store.js";
 import { MAX_TRIP_DAYS } from "~~/utils/limits.js";
 
 // OPENAI_BASE_URL is optional: point the client at a proxy or a stand-in service (the tests do). Unset, it talks to OpenAI.
-const openai = new OpenAI({ baseURL: process.env.OPENAI_BASE_URL || undefined });
+// The option is left out when unset: the SDK spreads its options over its defaults, so `baseURL: undefined` would erase the default address.
+const openai = new OpenAI(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {});
 
 const COORDINATE_RULES = ' . Also at the end of each day can you provide the coordinates [longitude FIRST, then latitude] for each destination, example: Big Ben [-0.1246, 51.5007]. Put the coordinates in [] and separate them by ,. Also each time you mention a name of a destination with coordinates please repeat that name and put it in {} brackets after the original name so it looks like this - Eiffel Tower {Eiffel Tower}. If there are 7 coordinates for the given day I need 7 names of destinations. This is an example of how a single destination from a day should look like: 1. Rijksmuseum {Rijksmuseum} [4.8852, 52.3590] Start your day by visiting the Rijksmuseum. This expansive museum is home to thousands of art pieces, including works by Rembrandt and Vermeer. Please DONT give a separate Coordinates section after each Day';
 

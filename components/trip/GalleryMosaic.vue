@@ -1,7 +1,7 @@
 <script setup>
-// Version 2 of the photos beside the trip form: a wall of six photographs in two columns, the second one stepped down,
-// each tile carrying its place on a small white chip. The first tile keeps the arch top.
-//   photos  [{ place, src, width, height }]  (the first six are used)
+// The photos beside the trip form: a wall of six photographs in two columns, the second one stepped down, each tile
+// carrying its place on a small white chip. The first tile keeps the arch top. Shown through LandingStage's `art` slot.
+//   photos  [{ place, src, width, height }]  (the first six are used, see utils/trip-gallery.js)
 const props = defineProps({ photos: { type: Array, required: true } })
 const left = computed(() => [props.photos[0], props.photos[1], props.photos[4]])
 const right = computed(() => [props.photos[5], props.photos[3], props.photos[2]])

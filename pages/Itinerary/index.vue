@@ -1,10 +1,12 @@
 <script setup>
-import { ArrowLeft, Calendar, MapPin, Users } from 'lucide-vue-next'
+import { ArrowLeft, Calendar, ChevronsDownUp, ChevronsUpDown, MapPin, Users } from 'lucide-vue-next'
 
 // The itinerary: where the trip form leads. The header is the trip as it was asked for (it needs no waiting: it comes from
 // the address), then one card per day and a map. The plan is drafted by a language model and takes around 20 seconds, so the
 // page shows the days as labelled placeholders while it waits; the destination's photo and description come from a faster
-// lookup and fill in on their own. Pressing a day shows its stops on the map, pressing it again shows every day.
+// lookup and fill in on their own. A day card folds (the plan opens with only the first day showing, so a long trip is a
+// short page; "Expand all" opens them). A day's "Show on map" button, or its button on the map, puts its stops on the map
+// and opens that day alone; pressing it again shows every day.
 // Reading the model's reply is in utils/itinerary.js, the words in utils/itinerary-content.js, the map in components/trip/Map.vue.
 const copy = itineraryContent
 const route = useRoute()
@@ -35,6 +37,7 @@ useSeoMeta({ title: () => copy.meta(destination.value).title, description: () =>
 const status = ref(problem.value ? 'missing' : 'loading') // loading | ready | failed | limit | missing
 const days = ref([])
 const selected = ref(null) // index of the day on the map, or null for every day
+const open = ref(new Set()) // indexes of the day cards that are showing their stops
 const place = ref(null) // { description, imageUrl } from the destination lookup
 const placeDone = ref(false)
 const note = ref(null)
@@ -69,6 +72,7 @@ async function load() {
   status.value = 'loading'
   days.value = []
   selected.value = null
+  open.value = new Set()
   loadPlace(mine)
   try {
     const preferences = interests.value.join(',')
@@ -80,6 +84,7 @@ async function load() {
     const parsed = parseItinerary(reply)
     if (!parsed.length) throw new Error('the reply was not a plan')
     days.value = parsed
+    open.value = new Set([0])
     status.value = 'ready'
   } catch (error) {
     // 402: this account has used its free trips (an answer, not a failure: there is nothing to try again)
@@ -108,12 +113,48 @@ const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)'
 function pick(index) {
   selected.value = index
   presses.value++
-  // in the phone layout the map is above the days: bring it into view when a day is chosen from far below
-  if (index !== null && window.matchMedia('(max-width: 979px)').matches) {
+  if (index === null) return
+  // looking at one day: its card opens and the others close, so what is read is what is on the map
+  open.value = new Set([index])
+  if (window.matchMedia('(max-width: 979px)').matches) {
+    // in the phone layout the map is above the days: bring it into view when a day is chosen from far below
     mapCard.value?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' })
+  } else {
+    reveal(index)
   }
 }
-const toggle = (index) => pick(selected.value === index ? null : index)
+const toggleOnMap = (index) => pick(selected.value === index ? null : index)
+
+// ── folding the day cards ──
+const allOpen = computed(() => days.value.length > 0 && open.value.size === days.value.length)
+
+function fold(index) {
+  const next = new Set(open.value)
+  if (!next.delete(index)) next.add(index)
+  open.value = next
+}
+const foldAll = () => { open.value = allOpen.value ? new Set() : new Set(days.value.keys()) }
+
+/**
+ * In the wide layout the map stays pinned while the days scroll: after a day is chosen on the map, bring its card into view if
+ * it is not. The map is only pinned while the days column is long enough, so never scroll further than the point where the
+ * map would start to slide up with the page; a card that is then a little lower on the screen is still in view.
+ */
+async function reveal(index) {
+  await nextTick()
+  // the other cards are closing as this one opens: look where it ended up once they have settled
+  if (!reducedMotion()) await new Promise((resolve) => setTimeout(resolve, 380))
+  const card = document.getElementById(`day-${days.value[index]?.number}`)
+  const map = mapCard.value
+  if (!card || !map) return
+  const pinned = parseFloat(getComputedStyle(map).top) || 0 // where the map sits while it is pinned: just under the header
+  const { top } = card.getBoundingClientRect()
+  if (top >= pinned && top <= window.innerHeight - 200) return
+  const wrap = map.parentElement
+  const limit = wrap.getBoundingClientRect().bottom + window.scrollY - parseFloat(getComputedStyle(wrap).paddingBottom) - map.offsetHeight - pinned
+  const target = Math.min(window.scrollY + top - pinned, limit)
+  window.scrollTo({ top: Math.max(0, target), behavior: reducedMotion() ? 'auto' : 'smooth' })
+}
 </script>
 
 <template>
@@ -193,7 +234,23 @@ const toggle = (index) => pick(selected.value === index ? null : index)
             <TripDay v-for="n in length" :key="n" :number="n" :tone="toneOfDay(n - 1)" />
           </template>
           <template v-else>
-            <TripDay v-for="(day, i) in days" :key="day.number" :number="day.number" :day="day" :tone="toneOfDay(i)" :selected="selected === i" @toggle="toggle(i)" />
+            <div v-if="days.length > 1" class="plan__fold">
+              <p class="plan__count mono">{{ copy.days(days.length) }} · {{ copy.stops(stopCount) }}</p>
+              <button class="plan__foldall" type="button" @click="foldAll">
+                <component :is="allOpen ? ChevronsDownUp : ChevronsUpDown" aria-hidden="true" :stroke-width="1.75" />{{ allOpen ? copy.fold.collapse : copy.fold.expand }}
+              </button>
+            </div>
+            <TripDay
+              v-for="(day, i) in days"
+              :key="day.number"
+              :number="day.number"
+              :day="day"
+              :tone="toneOfDay(i)"
+              :open="open.has(i)"
+              :selected="selected === i"
+              @toggle="fold(i)"
+              @show="toggleOnMap(i)"
+            />
           </template>
         </section>
       </template>
@@ -208,6 +265,11 @@ const toggle = (index) => pick(selected.value === index ? null : index)
 .plan__wrap--alone .plan__days { margin-top: 28px; }
 .plan__head { grid-area: head; min-width: 0; padding-top: calc(clamp(20px, 3vw, 36px) - 16px); } /* the wide layout's 16px top is where the pinned map starts */
 .plan__days { grid-area: days; display: grid; gap: 14px; min-width: 0; }
+.plan__fold { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: -4px; }
+.plan__count { margin: 0; color: var(--vp-ink-3); font-size: 12px; }
+.plan__foldall { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 4px 0 8px; border: 0; background: none; color: var(--vp-blue-deep); font: 600 14.5px/1 var(--vp-font); cursor: pointer; transition: color .2s; }
+.plan__foldall:hover { color: var(--vp-blue); }
+.plan__foldall svg { width: 18px; height: 18px; }
 .plan__map { grid-area: map; position: sticky; top: calc(var(--bar) + 16px); height: calc(100vh - var(--bar) - 32px); min-height: 440px; scroll-margin-top: calc(var(--bar) + 12px); }
 
 .plan__back { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 18px; padding-block: 6px; color: var(--vp-ink-2); font: 500 15px/1 var(--vp-font); text-decoration: none; transition: color .2s; }

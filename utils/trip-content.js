@@ -2,7 +2,6 @@
 // The four field names are the ones the home page's search card shows (Destination, Dates, Interests, Travelers), so the
 // trip sketched there is the trip filled in here.
 
-import kyoto from '~/assets/images/landing/kyoto.webp'
 import { MAX_TRIP_DAYS } from './limits.js'
 
 export const MIN_TRAVELERS = 1
@@ -55,7 +54,4 @@ export const tripContent = {
     out: (limit) => `You have used your ${limit} free trips. Monthly and yearly plans are coming soon.`,
     plans: 'See the plans',
   },
-
-  // The photograph beside the form and its caption, as on the account pages.
-  art: { src: kyoto, width: 1200, height: 1200, place: 'Kyoto', coords: '35.01° N 135.77° E' },
 }
