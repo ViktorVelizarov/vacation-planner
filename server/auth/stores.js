@@ -17,6 +17,13 @@
 //     claim(name, seconds)       -> true when the wait starts now, false while an earlier one is still running
 //     release(name)
 //     secondsLeft(name)          -> whole seconds until it ends (0 when it is not running)
+//   free trips an account has used                key demos:<userId>   (never expires)
+//     demoCount(userId)          -> trips used so far
+//     demoReserve(userId, limit) -> true when a trip was taken from the allowance, false when none is left
+//     demoRefund(userId)         -> gives one back (the plan could not be drafted)
+//   drafted plans, so a refresh does not spend another trip   key plan:<userId>:<hash>
+//     planGet(userId, hash)      -> text | null
+//     planPut(userId, hash, text, seconds)
 //   throttles                                     key rate:<key>
 //     rateCount(key)             -> attempts counted inside the current window
 //     rateHit(key, windowSec)    -> count after adding one (the window starts at the first hit)
@@ -89,6 +96,23 @@ export function createUpstashStore({ url, token, prefix = 'vp', fetchImpl = fetc
       await command('DEL', k(`hold:${name}`))
     },
     secondsLeft: async (name) => Math.max(0, Number(await command('TTL', k(`hold:${name}`))) || 0),
+
+    demoCount: async (userId) => Number(await command('GET', k(`demos:${userId}`))) || 0,
+    // INCR is atomic: of two trips racing for the last place, only one sees a count within the limit.
+    demoReserve: async (userId, limit) => {
+      const used = Number(await command('INCR', k(`demos:${userId}`)))
+      if (used <= limit) return true
+      await command('DECR', k(`demos:${userId}`))
+      return false
+    },
+    demoRefund: async (userId) => {
+      await command('DECR', k(`demos:${userId}`))
+    },
+
+    planGet: async (userId, hash) => (await command('GET', k(`plan:${userId}:${hash}`))) ?? null,
+    planPut: async (userId, hash, text, seconds) => {
+      await command('SET', k(`plan:${userId}:${hash}`), text, 'EX', String(seconds))
+    },
 
     rateCount: async (key) => Number(await command('GET', k(`rate:${key}`))) || 0,
     rateHit: async (key, windowSec) => {

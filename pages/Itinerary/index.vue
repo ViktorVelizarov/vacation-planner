@@ -32,7 +32,7 @@ const range = computed(() => {
 useSeoMeta({ title: () => copy.meta(destination.value).title, description: () => copy.meta(destination.value).description, robots: 'noindex' })
 
 // ── what comes back ──
-const status = ref(problem.value ? 'missing' : 'loading') // loading | ready | failed | missing
+const status = ref(problem.value ? 'missing' : 'loading') // loading | ready | failed | limit | missing
 const days = ref([])
 const selected = ref(null) // index of the day on the map, or null for every day
 const place = ref(null) // { description, imageUrl } from the destination lookup
@@ -49,7 +49,7 @@ const showArch = computed(() => Boolean(photo.value) || !placeDone.value)
 const stopCount = computed(() => days.value.reduce((sum, day) => sum + day.coordinates.length, 0))
 const announcement = computed(() => (status.value === 'ready' ? `Your ${copy.days(days.value.length)} are ready. ${copy.stops(stopCount.value)} on the map.` : ''))
 // the map sits beside the days only while there are days to show it for
-const alone = computed(() => status.value === 'missing' || status.value === 'failed')
+const alone = computed(() => ['missing', 'failed', 'limit'].includes(status.value))
 
 async function loadPlace(mine) {
   placeDone.value = false
@@ -81,8 +81,9 @@ async function load() {
     if (!parsed.length) throw new Error('the reply was not a plan')
     days.value = parsed
     status.value = 'ready'
-  } catch {
-    if (mine === attempt) status.value = 'failed'
+  } catch (error) {
+    // 402: this account has used its free trips (an answer, not a failure: there is nothing to try again)
+    if (mine === attempt) status.value = error?.statusCode === 402 ? 'limit' : 'failed'
   }
 }
 
@@ -142,6 +143,14 @@ const toggle = (index) => pick(selected.value === index ? null : index)
             <div class="plan__actions">
               <LandingButton size="lg" arrow @click="retry">{{ copy.failed.retry }}</LandingButton>
               <LandingButton to="/vacationForm" variant="ghost" size="lg">{{ copy.failed.change }}</LandingButton>
+            </div>
+          </div>
+
+          <div v-else-if="status === 'limit'" class="plan__fail" role="status">
+            <p class="plan__limit">{{ copy.limit.text(FREE_TRIPS) }}</p>
+            <div class="plan__actions">
+              <LandingButton to="/#pricing" size="lg" arrow>{{ copy.limit.cta }}</LandingButton>
+              <LandingButton to="/vacationForm" variant="ghost" size="lg">{{ copy.limit.back }}</LandingButton>
             </div>
           </div>
 
@@ -223,6 +232,7 @@ const toggle = (index) => pick(selected.value === index ? null : index)
 .plan__empty p { margin: 0; }
 .plan__empty .btn { justify-self: start; }
 .plan__fail { display: grid; gap: 16px; margin-top: 22px; }
+.plan__limit { margin: 0; padding: 14px 16px; border: 1px solid var(--vp-line); border-radius: var(--vp-radius); background: var(--vp-paper); color: var(--vp-ink); font: 500 15px/1.5 var(--vp-font); }
 .plan__actions { display: flex; flex-wrap: wrap; gap: 12px; }
 
 /* the map card: a hairline card holding the day buttons and the map */

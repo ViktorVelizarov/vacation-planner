@@ -32,9 +32,9 @@ useHead({
 
     <main id="main">
       <LandingHowItWorks v-bind="content.how" />
-      <LandingSamples :cta="content.demo" v-bind="content.samples" />
       <LandingLimits v-bind="content.limits" />
       <LandingQuotes v-bind="content.quotes" />
+      <LandingPricing :cta="content.demo" v-bind="content.pricing" />
       <LandingClosing :cta="content.demo" v-bind="content.closing" />
     </main>
 

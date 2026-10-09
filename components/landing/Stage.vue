@@ -20,7 +20,8 @@ defineProps({
       <slot />
     </div>
 
-    <figure v-if="art" class="stage__art">
+    <div v-if="$slots.art" class="stage__art stage__art--gallery"><slot name="art" /></div>
+    <figure v-else-if="art" class="stage__art">
       <LandingPhoto class="stage__arch" shape="arch" :src="art.src" alt="" :width="art.width" :height="art.height" eager />
       <figcaption class="mono">{{ art.place }} · {{ art.coords }}</figcaption>
     </figure>
@@ -36,6 +37,7 @@ defineProps({
 
 .stage__art { display: grid; justify-items: center; gap: 18px; margin: 0; }
 .stage__arch { width: min(100%, 340px); aspect-ratio: 3 / 4; }
+.stage__art--gallery { display: block; position: sticky; top: calc(var(--app-bar, 66px) + 16px); }
 .stage__art figcaption { color: var(--vp-ink-3); text-align: center; }
 
 @media (max-width: 980px) {

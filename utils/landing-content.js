@@ -6,9 +6,15 @@
 // wherever a visitor could mistake it for a claim, so keep the word when you edit the strings.
 
 import paris from '~/assets/images/landing/paris.webp'
-import lisbon from '~/assets/images/landing/lisbon.webp'
-import kyoto from '~/assets/images/landing/kyoto.webp'
-import reykjavik from '~/assets/images/landing/reykjavik.webp'
+import santorini from '~/assets/images/landing/santorini.webp'
+import venice from '~/assets/images/landing/venice.webp'
+import amsterdam from '~/assets/images/landing/amsterdam.webp'
+import dayMorning from '~/assets/images/landing/day-morning.webp'
+import dayMuseum from '~/assets/images/landing/day-museum.webp'
+import dayEvening from '~/assets/images/landing/day-evening.webp'
+import { FREE_TRIPS } from '~/utils/limits'
+
+const WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
 
 /** Where every "Try a demo" button goes: the real trip form. Change it here and every button follows. */
 export const DEMO_ROUTE = '/vacationForm'
@@ -27,9 +33,9 @@ export const landingContent = {
 
   nav: [
     { label: 'How it works', to: '#how' },
-    { label: 'Samples', to: '#samples' },
     { label: 'Limits', to: '#limits' },
     { label: 'Quotes', to: '#quotes' },
+    { label: 'Pricing', to: '#pricing' },
   ],
 
   // The nav's account control: a "Sign in" button, or the visitor's name and "Sign out" once signed in.
@@ -43,7 +49,7 @@ export const landingContent = {
   // and the search card covers wall, not subject. Source file is 1280x724; a 2400x1350 export is better.
   hero: {
     headline: ['Your Next Trip,', 'Planned Day by Day'],
-    lead: 'Tell us where, when and what you like. Our AI drafts every day, with places to see, places to eat and a map for each.',
+    lead: 'Tell us where, when and what you like. We draft every day, with places to see, places to eat and a map for each.',
     image: {
       src: paris,
       width: 1280,
@@ -55,24 +61,12 @@ export const landingContent = {
   // The search-style card at the hero's edge. Deliberately read-only: the real inputs live on the trip form.
   finder: {
     label: 'Start a trip',
-    tabsLabel: 'Demo views',
     plan: {
-      tab: 'Plan a trip',
-      head: ['Sample request', 'Trip VP-48201'],
       fields: [
         { icon: 'pin', label: 'Destination', value: 'Lisbon, Portugal' },
         { icon: 'calendar', label: 'Dates', value: '12 – 14 Oct', note: '3 days' },
         { icon: 'compass', label: 'Interests', value: 'Historical, Art & cultural' },
         { icon: 'users', label: 'Travelers', value: '2 people' },
-      ],
-    },
-    sample: {
-      tab: 'See a sample',
-      head: ['Sample itinerary', 'Trip VP-48201 · 3 days'],
-      days: [
-        { tone: 'blue', pill: 'Day 1', title: 'Alfama & the river', meta: '5 stops · 2 meals' },
-        { tone: 'coral', pill: 'Day 2', title: 'Belém & the waterfront', meta: '5 stops · 2 meals' },
-        { tone: 'peach', pill: 'Day 3', title: 'Chiado & Bairro Alto', meta: '4 stops · 2 meals' },
       ],
     },
   },
@@ -85,63 +79,11 @@ export const landingContent = {
       { pill: '02', tone: 'coral', title: 'Read your days', text: 'A plan for every day, with places to see, places to eat and a line about each.' },
       { pill: '03', tone: 'peach', title: 'Follow the map', text: 'Numbered stops joined by a walking route. Tap a stop for a photo.' },
     ],
-    // Photo slots still waiting for images. Pass { src, alt } to fill one: big is 900x1200 (3:4), small 640x900 (32:45).
-    arches: { big: null, small: null },
-  },
-
-  samples: {
-    eyebrow: 'Sample itineraries',
-    title: 'Start from a sample trip',
-    // Ratings are samples, not reviews. Square 1200x1200 photos; the card crops them to 9:10 (4:3 on small screens).
-    destinations: [
-      {
-        name: 'Lisbon',
-        country: 'Portugal',
-        coords: '38.72° N 9.14° W',
-        rating: '4.9',
-        ratingTag: 'Sample',
-        days: '3 days',
-        party: 'for 2 travelers',
-        image: {
-          src: lisbon,
-          width: 1200,
-          height: 1200,
-          alt: "A vintage tram climbing a steep cobbled street in Lisbon's Alfama district at blue hour, the Tagus and the 25 de Abril Bridge at the top",
-        },
-      },
-      {
-        name: 'Kyoto',
-        country: 'Japan',
-        coords: '35.01° N 135.77° E',
-        rating: '4.8',
-        ratingTag: 'Sample',
-        days: '4 days',
-        party: 'for 2 travelers',
-        standin: '#243b8c',
-        image: {
-          src: kyoto,
-          width: 1200,
-          height: 1200,
-          alt: "The Yasaka Pagoda silhouetted at the end of a lantern-lit lane in Kyoto's Higashiyama district at dusk",
-        },
-      },
-      {
-        name: 'Reykjavík',
-        country: 'Iceland',
-        coords: '64.15° N 21.94° W',
-        rating: '4.7',
-        ratingTag: 'Sample',
-        days: '3 days',
-        party: 'for 4 travelers',
-        standin: '#5d77d6',
-        image: {
-          src: reykjavik,
-          width: 1200,
-          height: 1200,
-          alt: 'The Hallgrímskirkja church tower floodlit above snow-dusted rooftops in Reykjavík at blue hour',
-        },
-      },
-    ],
+    // Photo slots: big is 900x1200 (3:4), small 640x900 (32:45).
+    arches: {
+      big: { src: santorini, width: 900, height: 1200, alt: 'White chapels with blue domes above the sea on Santorini, Greece' },
+      small: { src: venice, width: 640, height: 900, alt: 'A gondola on a narrow canal between warm-coloured houses in Venice' },
+    },
   },
 
   limits: {
@@ -153,13 +95,13 @@ export const landingContent = {
       { value: '5', label: 'Interests to steer it' },
       { value: '1', label: 'Map for every day' },
     ],
-    // Photo slots still waiting for images: art is 900x1200 (3:4), thumbnails 240x240. Pass { src, alt } to fill one.
-    art: null,
+    // Photo slots: art is 900x1200 (3:4), thumbnails are squares shown at about 86px (480x480 for sharp screens).
+    art: { src: amsterdam, width: 900, height: 1200, alt: 'Tall canal houses with mirrored windows rising from the water in Amsterdam' },
     thumbsLabel: 'Three sample days',
     thumbs: [
-      { caption: 'Day 1', image: null },
-      { caption: 'Day 2', image: null, standin: '#243b8c' },
-      { caption: 'Day 3', image: null, standin: 'var(--vp-peach)', darkCaption: true },
+      { caption: 'Day 1', image: { src: dayMorning, width: 480, height: 480, alt: 'A cappuccino and a croissant on a wooden café table' } },
+      { caption: 'Day 2', image: { src: dayMuseum, width: 480, height: 480, alt: 'A visitor walking through a quiet museum gallery' } },
+      { caption: 'Day 3', image: { src: dayEvening, width: 480, height: 480, alt: 'A cobbled street with café tables under string lights at night' } },
     ],
   },
 
@@ -195,20 +137,57 @@ export const landingContent = {
     ],
   },
 
+  // The plans. The paid ones are not on sale yet (soon: true), so they show "Coming soon" instead of a button; the free
+  // allowance is real and enforced on the server (FREE_TRIPS, server/auth/demos.js). Keep this honest when payments arrive.
+  pricing: {
+    eyebrow: 'Pricing',
+    title: `${WORDS[FREE_TRIPS] ?? FREE_TRIPS} trips free, then pick a plan`,
+    text: `Every account can plan ${FREE_TRIPS} trips for free, no card. When they are used up, plan as many as you like with a monthly or a yearly plan.`,
+    soonLabel: 'Coming soon',
+    plans: [
+      {
+        id: 'free',
+        name: 'Free',
+        price: String(FREE_TRIPS),
+        per: 'free trips per account',
+        features: ['A full plan for every day', 'Places to see and places to eat', 'A map with a walking route for each day', 'Up to 10 days a trip'],
+      },
+      {
+        id: 'monthly',
+        name: 'Monthly',
+        price: '$6',
+        per: 'per month',
+        soon: true,
+        features: ['Unlimited trips', 'Everything in Free', 'Cancel any time'],
+      },
+      {
+        id: 'yearly',
+        name: 'Yearly',
+        price: '$48',
+        per: 'per year',
+        tag: 'Best value',
+        best: true,
+        soon: true,
+        features: ['Unlimited trips', 'Everything in Free', 'Works out at $4 a month: two months free'],
+      },
+    ],
+    note: 'Prices are in US dollars. The paid plans open soon; your free trips work today with a free account.',
+  },
+
   closing: {
     title: 'Ready to plan yours?',
-    text: 'Four answers in, a whole trip out. A free account opens the live trip form: no card.',
+    text: `Four answers in, a whole trip out. Your first ${FREE_TRIPS} trips are free: no card.`,
   },
 
   footer: {
     links: [
       { label: 'How it works', to: '#how' },
-      { label: 'Samples', to: '#samples' },
       { label: 'Limits', to: '#limits' },
+      { label: 'Pricing', to: '#pricing' },
       demo,
     ],
     // The footer prints "© <current year> " in front of the credit line.
     credit: 'Vacation Planner · Itineraries drafted by an OpenAI model · Maps by Mapbox',
-    note: 'Ratings, trip lengths and quotes on this page are samples',
+    note: 'The request in the card and the quotes on this page are samples',
   },
 }

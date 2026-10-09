@@ -3,9 +3,8 @@
 // trip sketched there is the trip filled in here.
 
 import kyoto from '~/assets/images/landing/kyoto.webp'
+import { MAX_TRIP_DAYS } from './limits.js'
 
-/** The longest trip the planner takes (the form has always said "max 10 days"; now the date field holds to it). */
-export const MAX_TRIP_DAYS = 10
 export const MIN_TRAVELERS = 1
 export const MAX_TRAVELERS = 10
 
@@ -50,6 +49,12 @@ export const tripContent = {
   submit: 'Plan my trip',
   busy: 'Planning…',
   wait: 'Drafting takes around 20 seconds.',
+  // The free allowance (FREE_TRIPS), shown under the button once the account's count is known.
+  trips: {
+    left: (left, limit) => `${left} of ${limit} free trips left.`,
+    out: (limit) => `You have used your ${limit} free trips. Monthly and yearly plans are coming soon.`,
+    plans: 'See the plans',
+  },
 
   // The photograph beside the form and its caption, as on the account pages.
   art: { src: kyoto, width: 1200, height: 1200, place: 'Kyoto', coords: '35.01° N 135.77° E' },

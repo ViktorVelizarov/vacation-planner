@@ -16,8 +16,8 @@ public/fonts/              Bricolage Grotesque + Spline Sans Mono (self-hosted)
 
 - **Where "Try a demo" goes.** Every button reads `DEMO_ROUTE` in `utils/landing-content.js` (now `/vacationForm`). Change it there and all of them follow. They are `NuxtLink`s, so navigation is client-side. The trip form is behind sign-in: a visitor without an account lands on `/sign-in` first and is sent on afterwards (`middleware/auth.global.js`, pages listed in `PROTECTED_PATHS`).
 - **Real data instead of the samples.** Each section takes plain props, so a slice of `landingContent` can be replaced with anything of the same shape, for example in `pages/index.vue`:
-  `const { data: destinations } = await useFetch('/api/destinations')` then `<LandingSamples :destinations="destinations" ... />`.
-- **Samples stay labelled.** Ratings, trip lengths, quotes and the request in the search card are illustrative. Keep "Sample" in their strings until they are real (PRODUCT.md, "Sample means sample").
+  `const { data: quotes } = await useFetch('/api/quotes')` then `<LandingQuotes v-bind="content.quotes" :items="quotes" />`.
+- **Samples stay labelled.** The quotes and the request in the search card are illustrative. Keep "Sample" in their strings until they are real (PRODUCT.md, "Sample means sample").
 - **The search card is read-only on purpose.** It shows a sample request and links to the real form. Don't turn its fields into inputs here; prefill the form from a link or query string instead. The real form (`pages/vacationForm`) is drawn in the card's own vocabulary: the same four fields, each a wash icon tile, a mono key and a control.
 - **Reusing a piece elsewhere.** `--vp-*` tokens and fonts are global, so `LandingButton`, `LandingPill`, `LandingPhoto` and `LandingBrand` work anywhere. Sections rely on the shared type and `.mono` / `.eyebrow` / `.sec` classes, which apply inside an element with class `landing` (the landing layout provides it).
 
@@ -28,13 +28,12 @@ public/fonts/              Bricolage Grotesque + Spline Sans Mono (self-hosted)
 | `LandingHero` | Full-bleed photo, nav, two-line headline | `image`, `headline[]`, `lead`, `nav[]`, `account`, `cta` |
 | `LandingNav` | White nav over the photo | `links[]`, `account`, `cta` |
 | `LandingAccount` | Nav control: Sign in, or an initials disc + Sign out (icon-only on phones). Reads the session itself. `ink` draws it for a white bar | `account`, `ink` |
-| `LandingFinder` | Tabbed search-style card at the hero's edge (a real tablist) | `plan`, `sample`, `cta` |
+| `LandingFinder` | The search-style card at the hero's edge: one read-only sample request and a link to the real form | `plan`, `cta` |
 | `LandingHowItWorks` | Three numbered steps beside two arch photos | `eyebrow`, `title`, `steps[]`, `arches` |
-| `LandingSamples` | Section heading + destination cards | `eyebrow`, `title`, `destinations[]`, `cta` |
-| `LandingDestinationCard` | Photo, rating chip, place, trip length, button | `destination`, `cta` |
 | `LandingLimits` | Stat tiles beside an arch photo and day thumbnails | `eyebrow`, `title`, `text`, `tiles[]`, `art`, `thumbs[]` |
 | `LandingQuotes` | Scroll-snap quote track with prev/next buttons | `eyebrow`, `title`, `label`, `items[]` |
 | `LandingQuoteCard` | One quote | `quote` |
+| `LandingPricing` | The plans: Free (5 free trips per account), Monthly, Yearly. The paid plans show "Coming soon" instead of a button until payments exist | `eyebrow`, `title`, `text`, `plans[]`, `soonLabel`, `note`, `cta` |
 | `LandingClosing` | Final call to action | `title`, `text`, `cta` |
 | `LandingFooter` | Brand, links, sample disclaimer | `links[]`, `credit`, `note` |
 | `LandingButton` | The only button: a link with `to`, a real `<button>` without it. `variant` blue / white / line (outline on the photo) / ghost / tint, `size` sm / md / lg | `to`, `type`, `variant`, `size`, `arrow`, `block` |
@@ -50,7 +49,7 @@ public/fonts/              Bricolage Grotesque + Spline Sans Mono (self-hosted)
 ## Images
 
 - Photos live in `assets/images/landing/` and are imported in `utils/landing-content.js`; swap a file in place to change a picture. The `.webp.json` next to each image is the prompt it came from.
-- Slots still showing a flat blue stand-in: `how.arches.big` / `.small`, `limits.art` and `limits.thumbs[].image`. Set `{ src, alt, width, height }` to fill one (sizes are in the comments in `landing-content.js`).
+- Every slot has a photograph. The hero is generated (the Lisbon, Kyoto and Reykjavík pictures, once the sample trips, are still in the folder but no longer used on the home page); the six others (`how.arches.big` / `.small`, `limits.art`, `limits.thumbs[].image`) are free-to-use Unsplash photographs (Santorini, Venice, Amsterdam, a café table, a museum, a night street). Each has a `.webp.json` next to it with its source page, photographer and licence instead of a prompt. To swap one, replace the file or set `{ src, alt, width, height }` (sizes are in the comments in `landing-content.js`).
 - The hero is 1280x724. A 2400x1350 export would be sharper on wide screens; the figure should stay right of centre with the lower fifth empty, since the search card covers it.
 - Never tint or restyle a photo per image; `LandingPhoto` and `LandingHero` apply the same halftone + grain recipe to all of them.
 

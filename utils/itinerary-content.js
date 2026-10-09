@@ -36,6 +36,13 @@ export const itineraryContent = {
     change: 'Change the trip',
   },
 
+  // The account has used its free trips (the server answers 402)
+  limit: {
+    text: (limit) => `You have used your ${limit} free trips. Monthly and yearly plans are coming soon.`,
+    cta: 'See the plans',
+    back: 'Back to the trip form',
+  },
+
   // A visit to /itinerary without a usable trip in the address
   missing: {
     title: 'No trip to show yet',

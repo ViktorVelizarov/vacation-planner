@@ -10,6 +10,10 @@ useSeoMeta({ title: tripContent.meta.title, description: tripContent.meta.descri
 
 const copy = tripContent
 const router = useRouter()
+const route = useRoute()
+
+// Three versions of the photos beside the form to choose from: /vacationForm?design=cluster | mosaic | reel (anything else keeps the single arch).
+const design = computed(() => ['cluster', 'mosaic', 'reel'].find((name) => name === route.query.design) ?? null)
 
 const formData = reactive({
   destination: '',
@@ -20,6 +24,15 @@ const formData = reactive({
 })
 const errors = reactive({ destination: '', dates: '' })
 const busy = ref(false)
+const trips = ref(null) // { limit, used, left } once the account's free trips are known
+const out = computed(() => trips.value?.left === 0)
+onMounted(async () => {
+  try {
+    trips.value = await $fetch('/api/demos')
+  } catch {
+    // the form works without the count; the server still holds the limit
+  }
+})
 
 const daysBetween = (start, end) => Math.round((end - start) / 86400000) + 1
 
@@ -89,15 +102,23 @@ async function handleSubmit() {
             <TripTravelers v-model="formData.people" labelledby="trip-who-key" />
           </TripField>
 
-          <LandingButton type="submit" size="lg" arrow block :disabled="busy">{{ busy ? copy.busy : copy.submit }}</LandingButton>
-          <p class="wait">{{ copy.wait }}</p>
+          <LandingButton type="submit" size="lg" arrow block :disabled="busy || out">{{ busy ? copy.busy : copy.submit }}</LandingButton>
+          <p v-if="out" class="wait" role="status">{{ copy.trips.out(trips.limit) }} <NuxtLink class="wait__link" to="/#pricing">{{ copy.trips.plans }}</NuxtLink></p>
+          <p v-else class="wait">{{ copy.wait }}<span v-if="trips && !trips.unlimited" class="wait__trips">{{ copy.trips.left(trips.left, trips.limit) }}</span></p>
         </form>
       </LandingCard>
+      <template v-if="design" #art>
+        <TripGalleryCluster v-if="design === 'cluster'" :photos="tripGallery" />
+        <TripGalleryMosaic v-else-if="design === 'mosaic'" :photos="tripGallery" />
+        <TripGalleryReel v-else :photos="tripGallery" />
+      </template>
     </LandingStage>
   </div>
 </template>
 
 <style scoped>
 .form .btn { margin-top: 26px; }
+.wait__trips { margin-left: .4em; color: var(--vp-ink); font-weight: 600; }
+.wait__link { color: var(--vp-blue-deep); font-weight: 600; text-underline-offset: 3px; }
 .wait { margin-top: 14px; text-align: center; color: var(--vp-ink-2); font: 400 14.5px/1.4 var(--vp-font); }
 </style>
