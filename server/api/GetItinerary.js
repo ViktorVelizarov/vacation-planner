@@ -10,6 +10,14 @@ import { MAX_TRIP_DAYS } from "~~/utils/limits.js";
 // The option is left out when unset: the SDK spreads its options over its defaults, so `baseURL: undefined` would erase the default address.
 const openai = new OpenAI(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {});
 
+// The alias, not a dated snapshot: OpenAI retires snapshots on a schedule (gpt-4o-2024-05-13 on 2026-10-23) and moves the alias on.
+const MODEL = "gpt-4o";
+
+// How long to wait for the model (a 10-day plan takes about 25 seconds). Keep it shorter than the function's limit (maxDuration in
+// nitro.config.ts): a plan that never arrives then fails here, where the `finally` below still gives the trip back, instead of
+// Vercel cutting the request off first. No automatic retries, because each one would wait this long again.
+const DRAFT_TIMEOUT_MS = 100_000;
+
 const COORDINATE_RULES = ' . Also at the end of each day can you provide the coordinates [longitude FIRST, then latitude] for each destination, example: Big Ben [-0.1246, 51.5007]. Put the coordinates in [] and separate them by ,. Also each time you mention a name of a destination with coordinates please repeat that name and put it in {} brackets after the original name so it looks like this - Eiffel Tower {Eiffel Tower}. If there are 7 coordinates for the given day I need 7 names of destinations. This is an example of how a single destination from a day should look like: 1. Rijksmuseum {Rijksmuseum} [4.8852, 52.3590] Start your day by visiting the Rijksmuseum. This expansive museum is home to thousands of art pieces, including works by Rembrandt and Vermeer. Please DONT give a separate Coordinates section after each Day';
 
 const first = (value) => (Array.isArray(value) ? value[0] : value);
@@ -49,11 +57,14 @@ export default defineAuthHandler(async (event) => {
       (interests.length ? interests.join(", ") : "No specific preferences") +
       COORDINATE_RULES;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-2024-05-13",
-      temperature: 0.2,
-      messages: [{ role: "user", content: promptText }],
-    });
+    const completion = await openai.chat.completions.create(
+      {
+        model: MODEL,
+        temperature: 0.2,
+        messages: [{ role: "user", content: promptText }],
+      },
+      { timeout: DRAFT_TIMEOUT_MS, maxRetries: 0 },
+    );
 
     // Remove all "#" and "*" signs from the result
     const plan = (completion.choices[0].message.content ?? "").trim().replace(/[#*]/g, "");
