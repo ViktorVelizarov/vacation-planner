@@ -2,6 +2,8 @@
 
 A web application that plans your vacation. Enter a destination, your dates, what you like and how many people are going, and an OpenAI model drafts a day-by-day itinerary with places to see and places to eat. Every day is also drawn on a Mapbox map with numbered stops and a walking route. Accounts are stored in Upstash Redis and need a confirmed email address.
 
+<img width="1917" height="903" alt="image" src="https://github.com/user-attachments/assets/dc553944-b29a-490c-8d55-a3eb92b0d68c" />
+
 ## Features
 
 - Trip form with destination, dates (up to 10 days), interests and number of travelers
