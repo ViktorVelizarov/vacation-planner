@@ -6,8 +6,8 @@ import { authContent } from '~/utils/auth-content'
 definePageMeta({ layout: 'landing' })
 
 useSeoMeta({
-  title: 'Check your inbox — Vacation Planner',
-  description: 'Confirm your email address to finish creating your Vacation Planner account.',
+  title: 'Check your inbox — Vacation Buddy',
+  description: 'Confirm your email address to finish creating your Vacation Buddy account.',
   robots: 'noindex',
 })
 // it names the visitor's address: never keep a copy in a shared cache

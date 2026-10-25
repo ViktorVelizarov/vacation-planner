@@ -8,7 +8,7 @@ defineProps({
 
 <template>
   <NuxtLink :to="to" class="brand" :class="{ 'brand--ink': ink }">
-    <i aria-hidden="true" /><span class="brand__name">Vacation Planner</span>
+    <i aria-hidden="true" /><span class="brand__name">Vacation Buddy</span>
   </NuxtLink>
 </template>
 

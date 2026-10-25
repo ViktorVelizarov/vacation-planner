@@ -1,4 +1,4 @@
-/* Vacation Planner · landing page · fonts, design tokens and base styles.
+/* Vacation Buddy · landing page · fonts, design tokens and base styles.
  *
  * Loaded globally from nuxt.config.js, so it is written not to leak:
  *  - tokens are namespaced --vp-*, which cannot collide with the shadcn/Tailwind tokens in main.css;

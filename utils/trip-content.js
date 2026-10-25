@@ -9,8 +9,8 @@ export const MAX_TRAVELERS = 10
 
 export const tripContent = {
   meta: {
-    title: 'Plan your trip — Vacation Planner',
-    description: 'Tell Vacation Planner where you are going, when, what you like and how many are travelling.',
+    title: 'Plan your trip — Vacation Buddy',
+    description: 'Tell Vacation Buddy where you are going, when, what you like and how many are travelling.',
   },
 
   title: 'Plan your next adventure',

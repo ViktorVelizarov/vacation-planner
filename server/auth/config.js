@@ -6,7 +6,7 @@
 //   KV_REST_API_TOKEN       there (UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN work too).
 //   BREVO_API_KEY           an email service for the confirmation emails: one of these two,
 //   RESEND_API_KEY          plus the address they come from:
-//   AUTH_EMAIL_FROM         "Vacation Planner <hello@example.com>" or just the address.
+//   AUTH_EMAIL_FROM         "Vacation Buddy <hello@example.com>" or just the address.
 //   AUTH_BASE_URL           optional: the public address of the site, when it cannot be worked out (see mail.js).
 //
 // When one is missing the account endpoints answer 503 and the server log (and, in development only, the response)

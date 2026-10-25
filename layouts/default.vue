@@ -27,7 +27,7 @@ const year = new Date().getFullYear() // read at render time so it never goes st
 
     <footer class="landing foot">
       <div class="foot__row">
-        <p class="mono">© {{ year }} Vacation Planner. All rights reserved.</p>
+        <p class="mono">© {{ year }} Vacation Buddy. All rights reserved.</p>
       </div>
     </footer>
   </div>

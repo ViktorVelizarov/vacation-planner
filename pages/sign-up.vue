@@ -3,8 +3,8 @@
 definePageMeta({ layout: 'landing' })
 
 useSeoMeta({
-  title: 'Create your account — Vacation Planner',
-  description: 'Create a free Vacation Planner account to open the trip form.',
+  title: 'Create your account — Vacation Buddy',
+  description: 'Create a free Vacation Buddy account to open the trip form.',
   robots: 'noindex',
 })
 </script>

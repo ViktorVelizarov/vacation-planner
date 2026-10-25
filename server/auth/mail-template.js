@@ -24,7 +24,7 @@ const escapeHtml = (value) =>
 export function confirmationEmail({ name, link, hours }) {
   const first = String(name ?? '').trim().split(/\s+/)[0] || 'there'
   const lifetime = `The link works once and expires in ${hours} hours.`
-  const subject = 'Confirm your email for Vacation Planner'
+  const subject = 'Confirm your email for Vacation Buddy'
   const url = escapeHtml(link)
 
   const text = [
@@ -36,7 +36,7 @@ export function confirmationEmail({ name, link, hours }) {
     '',
     lifetime,
     '',
-    "You're getting this because someone used this address to create a Vacation Planner account. If that wasn't you, ignore this email: nothing happens unless the link is opened.",
+    "You're getting this because someone used this address to create a Vacation Buddy account. If that wasn't you, ignore this email: nothing happens unless the link is opened.",
     '',
   ].join('\n')
 
@@ -57,7 +57,7 @@ export function confirmationEmail({ name, link, hours }) {
 <tr><td style="padding:0 4px 20px;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
 <td width="17" height="22" bgcolor="${BLUE}" style="width:17px;height:22px;background:${BLUE};border-radius:999px 999px 0 0;font-size:0;line-height:0;">&nbsp;</td>
-<td style="padding-left:10px;font-family:${FONT};font-size:20px;line-height:22px;font-weight:700;letter-spacing:-0.02em;color:${INK};">Vacation Planner</td>
+<td style="padding-left:10px;font-family:${FONT};font-size:20px;line-height:22px;font-weight:700;letter-spacing:-0.02em;color:${INK};">Vacation Buddy</td>
 </tr></table>
 </td></tr>
 <tr><td bgcolor="#ffffff" style="background:#ffffff;border:1px solid ${LINE};border-radius:14px;padding:32px;">
@@ -71,7 +71,7 @@ export function confirmationEmail({ name, link, hours }) {
 <p style="margin:0;font-family:${FONT};font-size:13px;line-height:1.6;color:${INK_3};">Button not working? Paste this address into your browser:</p>
 <p style="margin:6px 0 0;font-family:${FONT};font-size:13px;line-height:1.5;word-break:break-all;"><a href="${url}" style="color:${BLUE_DEEP};text-decoration:underline;">${url}</a></p>
 </td></tr>
-<tr><td style="padding:20px 4px 0;font-family:${FONT};font-size:13px;line-height:1.6;color:${INK_2};">You're getting this because someone used this address to create a Vacation Planner account. If that wasn't you, ignore this email: nothing happens unless the button is pressed.</td></tr>
+<tr><td style="padding:20px 4px 0;font-family:${FONT};font-size:13px;line-height:1.6;color:${INK_2};">You're getting this because someone used this address to create a Vacation Buddy account. If that wasn't you, ignore this email: nothing happens unless the button is pressed.</td></tr>
 </table>
 </td></tr>
 </table>

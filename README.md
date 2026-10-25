@@ -1,4 +1,4 @@
-# Vacation Planner
+# Vacation Buddy
 
 A web application that plans your vacation. Enter a destination, your dates, what you like and how many people are going, and an OpenAI model drafts a day-by-day itinerary with places to see and places to eat. Every day is also drawn on a Mapbox map with numbered stops and a walking route. Accounts are stored in Upstash Redis and need a confirmed email address.
 
@@ -119,7 +119,7 @@ Set them in `.env` locally and under *Settings → Environment Variables* on Ver
 | `NUXT_SESSION_PASSWORD` | yes | 32 or more random characters that seal the sign-in cookie (`openssl rand -base64 32`). Changing it signs everyone out. |
 | `KV_REST_API_URL`, `KV_REST_API_TOKEN` | yes | The Upstash Redis database (REST address and token). `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` work too. |
 | `BREVO_API_KEY` or `RESEND_API_KEY` | one of them | The email service's API key. If both are set, Brevo is used. |
-| `AUTH_EMAIL_FROM` | yes | Who the confirmation emails come from, a sender the email service has verified: `Vacation Planner <hello@your-domain.com>` or just the address. |
+| `AUTH_EMAIL_FROM` | yes | Who the confirmation emails come from, a sender the email service has verified: `Vacation Buddy <hello@your-domain.com>` or just the address. |
 | `AUTH_BASE_URL` | no | The site's public address for the link in the email (`https://planner.example.com`). Only needed when it cannot be worked out, see [Deployment](#deployment). |
 | `UNLIMITED_TRIP_EMAILS` | no | Comma-separated addresses of accounts with no free-trip limit, for your own testing. It is read on the server and nobody else can switch it on. |
 | `OPENAI_BASE_URL` | no | Send the plan requests through a proxy or a stand-in service instead of OpenAI. Leave empty normally. |

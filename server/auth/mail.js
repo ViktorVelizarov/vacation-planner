@@ -11,15 +11,15 @@ import { AuthConfigError } from './config.js'
 export class MailError extends Error {}
 
 const SEND_TIMEOUT_MS = 8000
-const DEFAULT_SENDER_NAME = 'Vacation Planner'
+const DEFAULT_SENDER_NAME = 'Vacation Buddy'
 
-/** "Vacation Planner <hello@example.com>" or "hello@example.com"  ->  { name, email } */
+/** "Vacation Buddy <hello@example.com>" or "hello@example.com"  ->  { name, email } */
 export function parseSender(value) {
   const text = String(value ?? '').trim()
   if (!text) throw new AuthConfigError('AUTH_EMAIL_FROM is not set: the address the confirmation emails come from.')
   const named = text.match(/^(.*?)\s*<([^<>\s]+@[^<>\s]+)>$/)
   const email = named ? named[2] : /^[^<>\s,;"]+@[^<>\s,;"]+$/.test(text) ? text : ''
-  if (!email) throw new AuthConfigError('AUTH_EMAIL_FROM must look like "Vacation Planner <hello@example.com>" or hello@example.com.')
+  if (!email) throw new AuthConfigError('AUTH_EMAIL_FROM must look like "Vacation Buddy <hello@example.com>" or hello@example.com.')
   const name = (named ? named[1] : '').replace(/["<>\\\r\n]/g, '').trim()
   return { name: name || DEFAULT_SENDER_NAME, email }
 }

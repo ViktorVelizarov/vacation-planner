@@ -9,8 +9,8 @@ import { DEMO_ROUTE } from '~/utils/landing-content'
 definePageMeta({ layout: 'landing' })
 
 useSeoMeta({
-  title: 'Confirm your email — Vacation Planner',
-  description: 'Confirm your email address to finish creating your Vacation Planner account.',
+  title: 'Confirm your email — Vacation Buddy',
+  description: 'Confirm your email address to finish creating your Vacation Buddy account.',
   robots: 'noindex',
 })
 // the address carries a secret: keep it out of Referer headers and shared caches

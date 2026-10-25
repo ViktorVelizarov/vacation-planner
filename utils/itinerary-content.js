@@ -4,7 +4,7 @@ const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
 
 export const itineraryContent = {
   meta: (destination) => ({
-    title: destination ? `${destination} trip — Vacation Planner` : 'Your trip — Vacation Planner',
+    title: destination ? `${destination} trip — Vacation Buddy` : 'Your trip — Vacation Buddy',
     description: 'A day-by-day plan with places to see, places to eat and a map for each day.',
   }),
 

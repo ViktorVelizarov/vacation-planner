@@ -23,9 +23,9 @@ const demo = { label: 'Try a demo', to: DEMO_ROUTE }
 
 export const landingContent = {
   meta: {
-    title: 'Vacation Planner — Your next trip, planned day by day',
+    title: 'Vacation Buddy — Your next trip, planned day by day',
     description:
-      "Tell Vacation Planner where you're going, when, and what you like. It plans every day, with places to see, places to eat and a map for each. Try a demo.",
+      "Tell Vacation Buddy where you're going, when, and what you like. It plans every day, with places to see, places to eat and a map for each. Try a demo.",
     themeColor: '#1f2d52',
   },
 
@@ -187,7 +187,7 @@ export const landingContent = {
       demo,
     ],
     // The footer prints "© <current year> " in front of the credit line.
-    credit: 'Vacation Planner · Itineraries drafted by an OpenAI model · Maps by Mapbox',
+    credit: 'Vacation Buddy · Itineraries drafted by an OpenAI model · Maps by Mapbox',
     note: 'The request in the card and the quotes on this page are samples',
   },
 }

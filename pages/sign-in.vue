@@ -3,8 +3,8 @@
 definePageMeta({ layout: 'landing' })
 
 useSeoMeta({
-  title: 'Sign in — Vacation Planner',
-  description: 'Sign in to Vacation Planner to open the trip form.',
+  title: 'Sign in — Vacation Buddy',
+  description: 'Sign in to Vacation Buddy to open the trip form.',
   robots: 'noindex',
 })
 </script>
